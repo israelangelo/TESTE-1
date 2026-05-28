@@ -1,0 +1,189 @@
+/* ═══════════════════════════════════════════════════
+   BOX AGÊNCIA — CSS GLOBAL
+   Reset mobile-first + animações iOS + safe areas
+   ═══════════════════════════════════════════════════ */
+
+/* ── RESET ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent; /* remove highlight azul no tap Android */
+  -webkit-touch-callout: none;              /* remove callout no pressionar iOS */
+}
+
+html {
+  height: 100%;
+  /* Impede zoom no double-tap iOS sem bloquear pinch-zoom */
+  touch-action: manipulation;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #010e2e;
+  color: #ffffff;
+  font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Impede overscroll branco no iOS (rubber band) */
+  overscroll-behavior: none;
+  overflow: hidden;
+  height: 100%;
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
+  /* Garante que o fundo nunca aparece branco */
+  background: #010e2e;
+}
+
+/* ── INPUTS — remove estilo nativo iOS ── */
+input, select, textarea, button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  font-family: inherit;
+  outline: none;
+  border: none;
+}
+
+/* Evita zoom automático em inputs no iOS (font-size >= 16px) */
+input, select, textarea {
+  font-size: max(16px, 1em);
+}
+
+/* Remove autofill amarelo do Chrome/Android */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #010e2e inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #E06820;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Cor do placeholder */
+input::placeholder,
+textarea::placeholder {
+  color: #4a5568;
+}
+
+/* Select — seta personalizada via background */
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23aab4cc' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px !important;
+  cursor: pointer;
+}
+
+/* Date input — color-scheme dark para Safari/Chrome */
+input[type="date"],
+input[type="time"] {
+  color-scheme: dark;
+}
+
+/* ── SCROLLBAR — sumir em mobile ── */
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }
+
+/* ── ANIMAÇÕES DE TELA (slide horizontal iOS-style) ── */
+.page-enter {
+  transform: translateX(100%);
+  opacity: 0;
+}
+.page-enter-active {
+  transform: translateX(0);
+  opacity: 1;
+  transition: transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity 300ms ease;
+}
+.page-exit {
+  transform: translateX(0);
+  opacity: 1;
+}
+.page-exit-active {
+  transform: translateX(-30%);
+  opacity: 0;
+  transition: transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity 300ms ease;
+}
+
+/* ── MODAL BOTTOM SHEET ── */
+.modal-enter {
+  transform: translateY(100%);
+}
+.modal-enter-active {
+  transform: translateY(0);
+  transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.modal-exit {
+  transform: translateY(0);
+}
+.modal-exit-active {
+  transform: translateY(100%);
+  transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ── OVERLAY FADE ── */
+.overlay-enter { opacity: 0; }
+.overlay-enter-active {
+  opacity: 1;
+  transition: opacity 280ms ease;
+}
+.overlay-exit { opacity: 1; }
+.overlay-exit-active {
+  opacity: 0;
+  transition: opacity 280ms ease;
+}
+
+/* ── ACTIVE PRESS EM BOTÕES ── */
+button:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+
+/* ── SPINNER ── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── SAFE AREA (notch iPhone, câmera punch-hole Android) ── */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ── CONTAINER PADRÃO DAS PÁGINAS ── */
+.page-container {
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height — corrige barra de endereço mobile */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* scroll com mola iOS */
+  background: #010e2e;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ── CARD HOVER / FOCUS ── */
+.card-tap {
+  cursor: pointer;
+  transition: opacity 0.1s, transform 0.15s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.card-tap:active {
+  opacity: 0.85;
+  transform: scale(0.985);
+}
