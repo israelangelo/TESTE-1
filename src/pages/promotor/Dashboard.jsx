@@ -12,7 +12,6 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "../../context/AuthContext";
 
-// ─── ÍCONES SVG INLINE ───────────────────────────────────────────────────────
 const IconHome = () => (
   <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
     <path d="M3 12L12 3l9 9" /><path d="M9 21V12h6v9" /><path d="M3 12v9h18V12" />
@@ -63,11 +62,10 @@ const IconLogout = () => (
   </svg>
 );
 
-// ─── CORES ───────────────────────────────────────────────────────────────────
 const C = {
-  bg: "#010e2e",
-  card: "#0d1b3e",
-  border: "#1a2f5e",
+  bg: "#032774",
+  card: "#021d5a",
+  border: "#0a3572",
   orange: "#E06820",
   orangeLight: "#f07830",
   text: "#ffffff",
@@ -80,7 +78,6 @@ const C = {
   yellowBg: "#3d2a00",
 };
 
-// ─── DADOS MOCKADOS (depois virão do Firestore) ───────────────────────────────
 const TAREFAS_MOCK = [
   { id: 1, texto: "Verificar validade dos produtos", feita: false },
   { id: 2, texto: "Organizar gôndola do corredor 3", feita: false },
@@ -89,18 +86,13 @@ const TAREFAS_MOCK = [
   { id: 5, texto: "Preencher relatório de ruptura", feita: false },
 ];
 
-// ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
 export default function PromotorDashboard() {
   const { currentUser, userData } = useAuth();
   const navigate = useNavigate();
   const [aba, setAba] = useState("inicio");
   const [tarefas, setTarefas] = useState(TAREFAS_MOCK);
-
-  // Check-in state
-  const [checkinStatus, setCheckinStatus] = useState("idle"); // idle | buscando | feito | erro
+  const [checkinStatus, setCheckinStatus] = useState("idle");
   const [checkinDados, setCheckinDados] = useState(null);
-
-  // Ruptura state
   const [produto, setProduto] = useState("");
   const [motivo, setMotivo] = useState("");
   const [rupturaEnviada, setRupturaEnviada] = useState(false);
@@ -108,24 +100,17 @@ export default function PromotorDashboard() {
   const nomeUsuario = userData?.nome || currentUser?.email?.split("@")[0] || "Promotor";
   const tarefasFeitas = tarefas.filter((t) => t.feita).length;
   const progresso = Math.round((tarefasFeitas / tarefas.length) * 100);
-
-  const hora = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   const dataHoje = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
 
-  // ── Logout ──
   const handleLogout = async () => {
     await signOut(auth);
     navigate("/login");
   };
 
-  // ── Toggle tarefa ──
   const toggleTarefa = (id) => {
-    setTarefas((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, feita: !t.feita } : t))
-    );
+    setTarefas((prev) => prev.map((t) => (t.id === id ? { ...t, feita: !t.feita } : t)));
   };
 
-  // ── Check-in GPS ──
   const fazerCheckin = () => {
     setCheckinStatus("buscando");
     navigator.geolocation.getCurrentPosition(
@@ -140,12 +125,8 @@ export default function PromotorDashboard() {
         };
         setCheckinDados(dados);
         setCheckinStatus("feito");
-        // Salvar no Firestore
         try {
-          await addDoc(collection(db, "checkins"), {
-            ...dados,
-            criadoEm: serverTimestamp(),
-          });
+          await addDoc(collection(db, "checkins"), { ...dados, criadoEm: serverTimestamp() });
         } catch (e) {
           console.error("Erro ao salvar checkin:", e);
         }
@@ -155,13 +136,11 @@ export default function PromotorDashboard() {
     );
   };
 
-  // ── Registrar ruptura ──
   const registrarRuptura = async () => {
     if (!produto.trim()) return;
     try {
       await addDoc(collection(db, "rupturas"), {
-        produto,
-        motivo,
+        produto, motivo,
         promotorId: currentUser?.uid,
         promotorNome: nomeUsuario,
         criadoEm: serverTimestamp(),
@@ -175,11 +154,10 @@ export default function PromotorDashboard() {
     }
   };
 
-  // ─────────────────────────────────────────────────────────────────────────────
   return (
     <div style={{ background: C.bg, minHeight: "100vh", fontFamily: "'Barlow', sans-serif", maxWidth: 430, margin: "0 auto", position: "relative" }}>
 
-      {/* ── HEADER ── */}
+      {/* HEADER */}
       <div style={{ background: C.card, borderBottom: `1px solid ${C.border}`, padding: "16px 20px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <p style={{ margin: 0, fontSize: 13, color: C.muted }}>{dataHoje}</p>
@@ -192,13 +170,12 @@ export default function PromotorDashboard() {
         </div>
       </div>
 
-      {/* ── CONTEÚDO ── */}
+      {/* CONTEÚDO */}
       <div style={{ padding: "20px 16px 100px" }}>
 
-        {/* ════ ABA: INÍCIO ════ */}
+        {/* ABA: INÍCIO */}
         {aba === "inicio" && (
           <div>
-            {/* Card progresso */}
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20, marginBottom: 16 }}>
               <p style={{ margin: "0 0 8px", fontSize: 13, color: C.muted }}>Progresso do dia</p>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
@@ -210,7 +187,6 @@ export default function PromotorDashboard() {
               </div>
             </div>
 
-            {/* Cards de ação rápida */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
               <BotaoAcao icon={<IconGPS />} label="Check-in" sub={checkinStatus === "feito" ? "✓ Feito" : "Registrar local"} cor={checkinStatus === "feito" ? C.green : C.orange} onClick={() => setAba("checkin")} />
               <BotaoAcao icon={<IconCamera />} label="Fotos" sub="Before / After" cor={C.orange} onClick={() => alert("Funcionalidade de fotos em breve!")} />
@@ -218,7 +194,6 @@ export default function PromotorDashboard() {
               <BotaoAcao icon={<IconAlert />} label="Ruptura" sub="Registrar falta" cor={C.yellow} onClick={() => setAba("ruptura")} />
             </div>
 
-            {/* Loja do dia */}
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20 }}>
               <p style={{ margin: "0 0 4px", fontSize: 12, color: C.muted, textTransform: "uppercase", letterSpacing: 1 }}>Loja de hoje</p>
               <p style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: C.text }}>Supermercado Central</p>
@@ -230,13 +205,12 @@ export default function PromotorDashboard() {
           </div>
         )}
 
-        {/* ════ ABA: CHECK-IN ════ */}
+        {/* ABA: CHECK-IN */}
         {aba === "checkin" && (
           <div>
             <h2 style={{ color: C.text, fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>Check-in</h2>
             <p style={{ color: C.muted, fontSize: 14, margin: "0 0 24px" }}>Registre sua localização ao chegar na loja</p>
 
-            {/* Status */}
             {checkinStatus === "idle" && (
               <div style={{ textAlign: "center", padding: "40px 0" }}>
                 <div style={{ width: 80, height: 80, borderRadius: "50%", background: `${C.orange}22`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", color: C.orange }}>
@@ -279,7 +253,7 @@ export default function PromotorDashboard() {
           </div>
         )}
 
-        {/* ════ ABA: TAREFAS ════ */}
+        {/* ABA: TAREFAS */}
         {aba === "tarefas" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -291,44 +265,16 @@ export default function PromotorDashboard() {
                 {progresso}%
               </div>
             </div>
-
-            {/* Barra de progresso */}
             <div style={{ background: C.border, borderRadius: 99, height: 6, marginBottom: 20 }}>
               <div style={{ background: C.orange, width: `${progresso}%`, height: "100%", borderRadius: 99, transition: "width 0.4s ease" }} />
             </div>
-
-            {/* Lista */}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {tarefas.map((t) => (
-                <div
-                  key={t.id}
-                  onClick={() => toggleTarefa(t.id)}
-                  style={{
-                    background: t.feita ? C.greenBg : C.card,
-                    border: `1px solid ${t.feita ? C.green + "44" : C.border}`,
-                    borderRadius: 14,
-                    padding: "16px 18px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 14,
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <div style={{
-                    width: 28, height: 28, borderRadius: "50%",
-                    border: `2px solid ${t.feita ? C.green : C.border}`,
-                    background: t.feita ? C.green : "transparent",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    flexShrink: 0, color: "#fff", transition: "all 0.2s",
-                  }}>
+                <div key={t.id} onClick={() => toggleTarefa(t.id)} style={{ background: t.feita ? C.greenBg : C.card, border: `1px solid ${t.feita ? C.green + "44" : C.border}`, borderRadius: 14, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer", transition: "all 0.2s" }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", border: `2px solid ${t.feita ? C.green : C.border}`, background: t.feita ? C.green : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff", transition: "all 0.2s" }}>
                     {t.feita && <IconCheck />}
                   </div>
-                  <span style={{
-                    fontSize: 15, color: t.feita ? C.muted : C.text,
-                    textDecoration: t.feita ? "line-through" : "none",
-                    flex: 1,
-                  }}>
+                  <span style={{ fontSize: 15, color: t.feita ? C.muted : C.text, textDecoration: t.feita ? "line-through" : "none", flex: 1 }}>
                     {t.texto}
                   </span>
                 </div>
@@ -337,26 +283,20 @@ export default function PromotorDashboard() {
           </div>
         )}
 
-        {/* ════ ABA: RUPTURA ════ */}
+        {/* ABA: RUPTURA */}
         {aba === "ruptura" && (
           <div>
             <h2 style={{ color: C.text, fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>Ruptura de Produto</h2>
             <p style={{ color: C.muted, fontSize: 14, margin: "0 0 24px" }}>Registre produtos em falta na gôndola</p>
-
             {rupturaEnviada && (
               <div style={{ background: C.greenBg, border: `1px solid ${C.green}44`, borderRadius: 14, padding: 16, marginBottom: 16, color: C.green, fontWeight: 600 }}>
                 ✅ Ruptura registrada com sucesso!
               </div>
             )}
-
             <CampoTexto label="Nome do produto *" placeholder="Ex: Coca-Cola 2L" value={produto} onChange={setProduto} />
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: "block", color: C.muted, fontSize: 13, marginBottom: 8 }}>Motivo</label>
-              <select
-                value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
-                style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", color: C.text, fontSize: 15, outline: "none" }}
-              >
+              <select value={motivo} onChange={(e) => setMotivo(e.target.value)} style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", color: C.text, fontSize: 15, outline: "none" }}>
                 <option value="">Selecionar motivo</option>
                 <option value="falta_estoque">Falta de estoque</option>
                 <option value="produto_vencido">Produto vencido</option>
@@ -365,17 +305,15 @@ export default function PromotorDashboard() {
                 <option value="outro">Outro</option>
               </select>
             </div>
-
             <BotaoPrimario onClick={registrarRuptura} disabled={!produto.trim()}>
               ⚠️ Registrar Ruptura
             </BotaoPrimario>
           </div>
         )}
 
-        {/* ════ ABA: PERFIL ════ */}
+        {/* ABA: PERFIL */}
         {aba === "perfil" && (
           <div>
-            {/* Avatar */}
             <div style={{ textAlign: "center", padding: "24px 0 32px" }}>
               <div style={{ width: 80, height: 80, borderRadius: "50%", background: C.orange, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 32, fontWeight: 700, color: "#fff" }}>
                 {nomeUsuario[0].toUpperCase()}
@@ -386,8 +324,6 @@ export default function PromotorDashboard() {
                 Promotor
               </div>
             </div>
-
-            {/* Info cards */}
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, overflow: "hidden", marginBottom: 16 }}>
               <InfoRow label="Email" valor={currentUser?.email} pad />
               <div style={{ borderTop: `1px solid ${C.border}` }} />
@@ -395,12 +331,7 @@ export default function PromotorDashboard() {
               <div style={{ borderTop: `1px solid ${C.border}` }} />
               <InfoRow label="Status" valor="● Ativo" cor={C.green} pad />
             </div>
-
-            {/* Logout */}
-            <button
-              onClick={handleLogout}
-              style={{ width: "100%", background: C.redBg, border: `1px solid ${C.red}44`, borderRadius: 14, padding: "16px", color: C.red, fontSize: 16, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
-            >
+            <button onClick={handleLogout} style={{ width: "100%", background: C.redBg, border: `1px solid ${C.red}44`, borderRadius: 14, padding: "16px", color: C.red, fontSize: 16, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
               <IconLogout /> Sair da conta
             </button>
           </div>
@@ -408,33 +339,22 @@ export default function PromotorDashboard() {
 
       </div>
 
-      {/* ── BOTTOM NAV ── */}
-      <div style={{
-        position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
-        width: "100%", maxWidth: 430,
-        background: C.card, borderTop: `1px solid ${C.border}`,
-        display: "flex", justifyContent: "space-around",
-        padding: "10px 0 env(safe-area-inset-bottom, 10px)",
-        zIndex: 100,
-      }}>
+      {/* BOTTOM NAV */}
+      <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 430, background: C.card, borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-around", padding: "10px 0 env(safe-area-inset-bottom, 10px)", zIndex: 100 }}>
         <NavBtn icon={<IconHome />} label="Início" ativo={aba === "inicio"} onClick={() => setAba("inicio")} />
         <NavBtn icon={<IconPin />} label="Check-in" ativo={aba === "checkin"} onClick={() => setAba("checkin")} />
         <NavBtn icon={<IconList />} label="Tarefas" ativo={aba === "tarefas"} onClick={() => setAba("tarefas")} />
         <NavBtn icon={<IconUser />} label="Perfil" ativo={aba === "perfil"} onClick={() => setAba("perfil")} />
       </div>
 
-      {/* ── CSS ANIMAÇÃO ── */}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
 
-// ─── COMPONENTES AUXILIARES ───────────────────────────────────────────────────
-
 function NavBtn({ icon, label, ativo, onClick }) {
-  const C = { orange: "#E06820", muted: "#aab4cc" };
   return (
-    <button onClick={onClick} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "4px 16px", color: ativo ? C.orange : C.muted, transition: "color 0.2s" }}>
+    <button onClick={onClick} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "4px 16px", color: ativo ? "#E06820" : "#aab4cc", transition: "color 0.2s" }}>
       <div style={{ transform: ativo ? "scale(1.1)" : "scale(1)", transition: "transform 0.2s" }}>{icon}</div>
       <span style={{ fontSize: 11, fontWeight: ativo ? 700 : 400 }}>{label}</span>
     </button>
@@ -442,59 +362,48 @@ function NavBtn({ icon, label, ativo, onClick }) {
 }
 
 function BotaoAcao({ icon, label, sub, cor, onClick }) {
-  const C = { card: "#0d1b3e", border: "#1a2f5e", text: "#fff", muted: "#aab4cc" };
   return (
-    <button onClick={onClick} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "18px 16px", cursor: "pointer", textAlign: "left", transition: "transform 0.1s" }}
+    <button onClick={onClick} style={{ background: "#021d5a", border: "1px solid #0a3572", borderRadius: 16, padding: "18px 16px", cursor: "pointer", textAlign: "left", transition: "transform 0.1s" }}
       onTouchStart={e => e.currentTarget.style.transform = "scale(0.97)"}
       onTouchEnd={e => e.currentTarget.style.transform = "scale(1)"}
     >
       <div style={{ color: cor, marginBottom: 10 }}>{icon}</div>
-      <p style={{ margin: "0 0 2px", fontSize: 15, fontWeight: 700, color: C.text }}>{label}</p>
-      <p style={{ margin: 0, fontSize: 12, color: C.muted }}>{sub}</p>
+      <p style={{ margin: "0 0 2px", fontSize: 15, fontWeight: 700, color: "#fff" }}>{label}</p>
+      <p style={{ margin: 0, fontSize: 12, color: "#aab4cc" }}>{sub}</p>
     </button>
   );
 }
 
 function BotaoPrimario({ onClick, children, disabled }) {
-  const C = { orange: "#E06820", orangeLight: "#f07830" };
   return (
-    <button onClick={onClick} disabled={disabled} style={{ width: "100%", background: disabled ? "#333" : C.orange, border: "none", borderRadius: 14, padding: "16px", color: "#fff", fontSize: 17, fontWeight: 700, cursor: disabled ? "not-allowed" : "pointer", marginBottom: 12, transition: "background 0.2s" }}>
+    <button onClick={onClick} disabled={disabled} style={{ width: "100%", background: disabled ? "#333" : "#E06820", border: "none", borderRadius: 14, padding: "16px", color: "#fff", fontSize: 17, fontWeight: 700, cursor: disabled ? "not-allowed" : "pointer", marginBottom: 12, transition: "background 0.2s" }}>
       {children}
     </button>
   );
 }
 
 function BotaoSecundario({ onClick, children }) {
-  const C = { card: "#0d1b3e", border: "#1a2f5e", orange: "#E06820" };
   return (
-    <button onClick={onClick} style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px", color: C.orange, fontSize: 16, fontWeight: 600, cursor: "pointer", marginBottom: 12 }}>
+    <button onClick={onClick} style={{ width: "100%", background: "#021d5a", border: "1px solid #0a3572", borderRadius: 14, padding: "14px", color: "#E06820", fontSize: 16, fontWeight: 600, cursor: "pointer", marginBottom: 12 }}>
       {children}
     </button>
   );
 }
 
 function CampoTexto({ label, placeholder, value, onChange }) {
-  const C = { card: "#0d1b3e", border: "#1a2f5e", text: "#fff", muted: "#aab4cc", orange: "#E06820" };
   return (
     <div style={{ marginBottom: 16 }}>
-      <label style={{ display: "block", color: C.muted, fontSize: 13, marginBottom: 8 }}>{label}</label>
-      <input
-        type="text"
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", color: C.text, fontSize: 15, outline: "none", boxSizing: "border-box" }}
-      />
+      <label style={{ display: "block", color: "#aab4cc", fontSize: 13, marginBottom: 8 }}>{label}</label>
+      <input type="text" placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} style={{ width: "100%", background: "#021d5a", border: "1px solid #0a3572", borderRadius: 12, padding: "14px 16px", color: "#fff", fontSize: 15, outline: "none", boxSizing: "border-box" }} />
     </div>
   );
 }
 
 function InfoRow({ label, valor, cor, pad }) {
-  const C = { text: "#fff", muted: "#aab4cc" };
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: pad ? "14px 18px" : "6px 0" }}>
-      <span style={{ fontSize: 14, color: C.muted }}>{label}</span>
-      <span style={{ fontSize: 14, color: cor || C.text, fontWeight: 500 }}>{valor}</span>
+      <span style={{ fontSize: 14, color: "#aab4cc" }}>{label}</span>
+      <span style={{ fontSize: 14, color: cor || "#fff", fontWeight: 500 }}>{valor}</span>
     </div>
   );
 }
