@@ -1,49 +1,58 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "../firebase/config";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { initializeApp } from "firebase/app";
+
+const firebaseConfig = {
+  apiKey: "COLE_SUA_API_KEY",
+  authDomain: "COLE_SEU_AUTH_DOMAIN",
+  projectId: "box-agencia-pt2",
+  storageBucket: "COLE_SEU_STORAGE_BUCKET",
+  messagingSenderId: "COLE_SEU_SENDER_ID",
+  appId: "COLE_SEU_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 const AuthContext = createContext();
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
-
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
-  const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  async function refreshUserData(user) {
-    const u = user || currentUser;
-    if (!u) return;
-    const snap = await getDoc(doc(db, "usuarios", u.uid));
-    if (snap.exists()) setUserData(snap.data());
-  }
+  const [perfil, setPerfil] = useState(null);
+  const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
       if (user) {
-        await refreshUserData(user);
+        const snap = await getDoc(doc(db, "usuarios", user.uid));
+        setPerfil(snap.exists() ? snap.data() : null);
+        setCurrentUser(user);
       } else {
-        setUserData(null);
+        setCurrentUser(null);
+        setPerfil(null);
       }
-      setLoading(false);
+      setCarregando(false);
     });
     return unsub;
   }, []);
 
-  const value = {
-    currentUser,
-    userData,
-    refreshUserData,
-    loading,
-  };
+  async function login(email, senha) {
+    return signInWithEmailAndPassword(auth, email, senha);
+  }
+
+  async function logout() {
+    return signOut(auth);
+  }
 
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider value={{ currentUser, perfil, carregando, login, logout }}>
+      {children}
     </AuthContext.Provider>
   );
+}
+
+export function useAuth() {
+  return useContext(AuthContext);
 }

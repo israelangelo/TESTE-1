@@ -1,89 +1,95 @@
-// src/pages/gestor/Dashboard.jsx
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signOut } from "firebase/auth";
-import { auth, db } from "../../firebase/config";
-import { useEffect, useState } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { useAuth } from "../../context/AuthContext";
+
+const NAV = [
+  { path: "/gestor", icon: "⊞", label: "Início" },
+  { path: "/gestor/promotores", icon: "👥", label: "Promotores" },
+  { path: "/gestor/lojas", icon: "🏪", label: "Lojas" },
+  { path: "/gestor/escala", icon: "📅", label: "Escala" },
+  { path: "/gestor/relatorios", icon: "📊", label: "Relatórios" },
+  { path: "/gestor/clientes", icon: "💼", label: "Clientes" },
+  { path: "/gestor/configuracoes", icon: "⚙️", label: "Config" },
+];
 
 export default function GestorDashboard() {
+  const { logout, perfil } = useAuth();
   const navigate = useNavigate();
-  const [stats, setStats] = useState({ promotores: 0, checkins: 0, lojas: 0, relatorios: 0 });
+  const [menuAberto, setMenuAberto] = useState(false);
 
-  useEffect(() => {
-    const carregar = async () => {
-      const [promotores, checkins, lojas, relatorios] = await Promise.all([
-        getDocs(query(collection(db, "usuarios"), where("perfil", "==", "promotor"), where("ativo", "==", true))),
-        getDocs(collection(db, "checkins")),
-        getDocs(query(collection(db, "lojas"), where("ativo", "==", true))),
-        getDocs(collection(db, "rupturas")),
-      ]);
-      setStats({
-        promotores: promotores.size,
-        checkins: checkins.size,
-        lojas: lojas.size,
-        relatorios: relatorios.size,
-      });
-    };
-    carregar();
-  }, []);
-
-  const sair = async () => { await signOut(auth); navigate("/login"); };
-
-  const menu = [
-    { icon: "👥", label: "Promotores", rota: "/gestor/promotores" },
-    { icon: "🏪", label: "Lojas",       rota: "/gestor/lojas" },
-    { icon: "📊", label: "Relatórios",  rota: "/gestor/relatorios" },
-    { icon: "👤", label: "Clientes",    rota: "/gestor/clientes" },
-    { icon: "📅", label: "Escala",      rota: "/gestor/escala" },
-    { icon: "⚙️", label: "Configurações", rota: "/gestor/configuracoes" },
-  ];
+  async function handleLogout() {
+    await logout();
+    navigate("/login");
+  }
 
   return (
-    <div style={s.bg}>
-      <div style={s.header}>
+    <div style={{ background: "#032774", minHeight: "100dvh", fontFamily: "Barlow, sans-serif", color: "#fff", maxWidth: 480, margin: "0 auto", position: "relative" }}>
+
+      {/* HEADER */}
+      <div style={{ background: "#032774", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
         <div>
-          <h1 style={s.logo}>BOX</h1>
-          <span style={s.sub}>AGÊNCIA</span>
+          <span style={{ fontFamily: "Barlow Condensed", fontSize: 28, fontWeight: 900, color: "#E06820" }}>BOX</span>
+          <span style={{ fontFamily: "Barlow Condensed", fontSize: 14, color: "#fff", marginLeft: 8, letterSpacing: 2 }}>AGÊNCIA</span>
         </div>
-        <button onClick={sair} style={s.sair}>Sair</button>
+        <button onClick={() => setMenuAberto(!menuAberto)} style={{ background: "none", color: "#fff", fontSize: 24, cursor: "pointer" }}>☰</button>
       </div>
 
-      <div style={s.grid4}>
-        {[
-          { num: stats.promotores, label: "Promotores Ativos" },
-          { num: stats.checkins,   label: "Check-ins Hoje" },
-          { num: stats.lojas,      label: "Lojas Ativas" },
-          { num: stats.relatorios, label: "Rupturas Registradas" },
-        ].map((c, i) => (
-          <div key={i} style={s.card}>
-            <h2 style={s.num}>{c.num}</h2>
-            <p style={s.label}>{c.label}</p>
+      {/* MENU LATERAL */}
+      {menuAberto && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }}>
+          <div onClick={() => setMenuAberto(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
+          <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 260, background: "#021d5a", padding: 24, display: "flex", flexDirection: "column", gap: 8 }}>
+            <p style={{ fontFamily: "Barlow Condensed", fontSize: 20, fontWeight: 700, color: "#E06820", marginBottom: 16 }}>MENU</p>
+            {NAV.map(item => (
+              <button key={item.path} onClick={() => { navigate(item.path); setMenuAberto(false); }} style={{ background: "none", color: "#fff", fontSize: 16, textAlign: "left", padding: "12px 8px", borderBottom: "1px solid rgba(255,255,255,0.08)", cursor: "pointer" }}>
+                {item.icon} {item.label}
+              </button>
+            ))}
+            <button onClick={handleLogout} style={{ background: "none", color: "#ff6b6b", fontSize: 16, textAlign: "left", padding: "12px 8px", marginTop: "auto", cursor: "pointer" }}>
+              🚪 Sair
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
-      <div style={s.grid3}>
-        {menu.map((m, i) => (
-          <div key={i} style={s.menuCard} onClick={() => navigate(m.rota)}>
-            <span style={{ fontSize: "clamp(22px,4vw,28px)" }}>{m.icon}</span>
-            <span style={{ fontSize: "clamp(13px,2.5vw,16px)", fontWeight: 600 }}>{m.label}</span>
-          </div>
-        ))}
+      {/* CONTEÚDO */}
+      <div style={{ padding: "20px 16px", overflowY: "auto", height: "calc(100dvh - 65px)" }}>
+
+        {/* SAUDAÇÃO */}
+        <p style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", marginBottom: 4 }}>Olá, {perfil?.nome || "Gestor"} 👋</p>
+        <h1 style={{ fontFamily: "Barlow Condensed", fontSize: 28, fontWeight: 700, margin: "0 0 20px" }}>Resumo do Dia</h1>
+
+        {/* CARDS RESUMO */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+          {[
+            { label: "Lojas Visitadas", valor: "0", cor: "#E06820" },
+            { label: "Check-ins Hoje", valor: "0", cor: "#22c55e" },
+            { label: "Fotos Enviadas", valor: "0", cor: "#3b82f6" },
+            { label: "Pendentes", valor: "0", cor: "#ef4444" },
+          ].map(card => (
+            <div key={card.label} style={{ background: "rgba(255,255,255,0.07)", borderRadius: 16, padding: "16px", borderLeft: `4px solid ${card.cor}` }}>
+              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", margin: "0 0 6px" }}>{card.label}</p>
+              <p style={{ fontSize: 32, fontFamily: "Barlow Condensed", fontWeight: 700, color: card.cor, margin: 0 }}>{card.valor}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* AÇÕES RÁPIDAS */}
+        <h2 style={{ fontFamily: "Barlow Condensed", fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Acesso Rápido</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {[
+            { label: "👥 Gerenciar Promotores", path: "/gestor/promotores" },
+            { label: "🏪 Gerenciar Lojas", path: "/gestor/lojas" },
+            { label: "📅 Escala de Trabalho", path: "/gestor/escala" },
+            { label: "📊 Relatórios", path: "/gestor/relatorios" },
+            { label: "💼 Clientes", path: "/gestor/clientes" },
+          ].map(item => (
+            <button key={item.path} onClick={() => navigate(item.path)} style={{ background: "rgba(255,255,255,0.07)", color: "#fff", fontSize: 16, padding: "16px", borderRadius: 12, textAlign: "left", cursor: "pointer", border: "1px solid rgba(255,255,255,0.1)" }}>
+              {item.label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
-
-const s = {
-  bg: { minHeight: "100vh", background: "#010e2e", fontFamily: "'Barlow', sans-serif" },
-  header: { background: "#0d1b3e", borderBottom: "2px solid #E06820", padding: "clamp(12px,3vw,16px) clamp(16px,4vw,32px)", display: "flex", justifyContent: "space-between", alignItems: "center" },
-  logo: { color: "#E06820", fontSize: "clamp(22px,4vw,28px)", fontWeight: 800, margin: 0, letterSpacing: 4 },
-  sub: { color: "#aab4cc", fontSize: 11, letterSpacing: 4 },
-  sair: { background: "transparent", border: "1px solid #E06820", color: "#E06820", padding: "8px 20px", borderRadius: 6, cursor: "pointer", fontSize: 14 },
-  grid4: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "clamp(10px,2vw,16px)", padding: "clamp(16px,3vw,32px) clamp(16px,4vw,32px) 0" },
-  card: { background: "#0d1b3e", border: "1px solid #1a2f5e", borderRadius: 12, padding: "clamp(16px,3vw,24px)", textAlign: "center" },
-  num: { color: "#E06820", fontSize: "clamp(28px,5vw,36px)", fontWeight: 800, margin: "0 0 8px" },
-  label: { color: "#aab4cc", fontSize: "clamp(11px,2vw,13px)", margin: 0 },
-  grid3: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "clamp(10px,2vw,16px)", padding: "clamp(12px,3vw,24px) clamp(16px,4vw,32px) 0" },
-  menuCard: { background: "#0d1b3e", border: "1px solid #1a2f5e", borderRadius: 12, padding: "clamp(20px,4vw,32px) 16px", textAlign: "center", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, transition: "border-color 0.2s" },
-};

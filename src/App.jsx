@@ -14,7 +14,7 @@ import Configuracoes from "./pages/gestor/Configuracoes";
 function RotaProtegida({ children }) {
   const { currentUser, carregando } = useAuth();
   if (carregando) return (
-    <div style={{ background: "#010e2e", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ background: "#032774", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <p style={{ color: "#E06820", fontFamily: "Barlow", fontSize: 18 }}>Carregando...</p>
     </div>
   );

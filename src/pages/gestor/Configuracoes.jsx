@@ -6,9 +6,9 @@ import { db, auth } from "../../firebase/config";
 import { useAuth } from "../../context/AuthContext";
 
 const CORES = {
-  bg: "#010e2e",
-  card: "#0d1b3e",
-  border: "#1a2f5e",
+  bg: "#032774",
+  card: "#021d5a",
+  border: "#0a3572",
   orange: "#E06820",
   muted: "#aab4cc",
   green: "#4caf50",
@@ -23,13 +23,11 @@ export default function Configuracoes() {
   const navigate = useNavigate();
   const { currentUser, userData, refreshUserData } = useAuth();
 
-  // ── Nome ──
   const [novoNome, setNovoNome] = useState(userData?.nome || "");
   const [nomeLocal, setNomeLocal] = useState(userData?.nome || "");
   const [salvandoNome, setSalvandoNome] = useState(false);
   const [feedbackNome, setFeedbackNome] = useState(null);
 
-  // ── Senha ──
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
@@ -37,12 +35,10 @@ export default function Configuracoes() {
   const [feedbackSenha, setFeedbackSenha] = useState(null);
   const [mostrarSenhas, setMostrarSenhas] = useState(false);
 
-  // ── Modal Sair ──
   const [modalSair, setModalSair] = useState(false);
   const [animandoModal, setAnimandoModal] = useState(false);
   const overlayRef = useRef(null);
 
-  // ─── SALVAR NOME ─────────────────────────────────────────────────
   async function salvarNome() {
     if (!novoNome.trim()) {
       setFeedbackNome({ tipo: "erro", msg: "Nome não pode ser vazio." });
@@ -51,20 +47,17 @@ export default function Configuracoes() {
     setSalvandoNome(true);
     setFeedbackNome(null);
     try {
-      await updateDoc(doc(db, "usuarios", currentUser.uid), {
-        nome: novoNome.trim(),
-      });
+      await updateDoc(doc(db, "usuarios", currentUser.uid), { nome: novoNome.trim() });
       await refreshUserData();
       setNomeLocal(novoNome.trim());
       setFeedbackNome({ tipo: "ok", msg: "Nome atualizado com sucesso!" });
-    } catch (e) {
+    } catch {
       setFeedbackNome({ tipo: "erro", msg: "Erro ao salvar. Tente novamente." });
     } finally {
       setSalvandoNome(false);
     }
   }
 
-  // ─── ALTERAR SENHA ───────────────────────────────────────────────
   async function alterarSenha() {
     setFeedbackSenha(null);
     if (!senhaAtual || !novaSenha || !confirmarSenha) {
@@ -99,7 +92,6 @@ export default function Configuracoes() {
     }
   }
 
-  // ─── MODAL SAIR ──────────────────────────────────────────────────
   function abrirModalSair() {
     setModalSair(true);
     requestAnimationFrame(() => setAnimandoModal(true));
@@ -119,7 +111,6 @@ export default function Configuracoes() {
     navigate("/login");
   }
 
-  // ─── RENDER ──────────────────────────────────────────────────────
   const s = estilos();
 
   return (
@@ -131,7 +122,7 @@ export default function Configuracoes() {
         <div style={{ width: 44 }} />
       </div>
 
-      {/* PERFIL INFO */}
+      {/* PERFIL */}
       <div style={s.perfilCard}>
         <div style={s.avatar}>
           {(nomeLocal || currentUser?.email || "G")[0].toUpperCase()}
@@ -143,7 +134,7 @@ export default function Configuracoes() {
         </div>
       </div>
 
-      {/* SEÇÃO — ALTERAR NOME */}
+      {/* ALTERAR NOME */}
       <div style={s.secao}>
         <div style={s.secaoTitulo}>👤 Alterar Nome</div>
         <input
@@ -162,56 +153,25 @@ export default function Configuracoes() {
             {feedbackNome.tipo === "ok" ? "✅" : "❌"} {feedbackNome.msg}
           </div>
         )}
-        <button
-          onClick={salvarNome}
-          disabled={salvandoNome}
-          style={{ ...s.btnPrincipal, opacity: salvandoNome ? 0.6 : 1 }}
-        >
+        <button onClick={salvarNome} disabled={salvandoNome} style={{ ...s.btnPrincipal, opacity: salvandoNome ? 0.6 : 1 }}>
           {salvandoNome ? "Salvando..." : "Salvar Nome"}
         </button>
       </div>
 
-      {/* DIVISOR */}
       <div style={s.divisor} />
 
-      {/* SEÇÃO — ALTERAR SENHA */}
+      {/* ALTERAR SENHA */}
       <div style={s.secao}>
         <div style={s.secaoTitulo}>🔒 Alterar Senha</div>
-
         <label style={s.label}>Senha Atual</label>
-        <input
-          type={mostrarSenhas ? "text" : "password"}
-          value={senhaAtual}
-          onChange={(e) => setSenhaAtual(e.target.value)}
-          placeholder="••••••••"
-          style={s.input}
-        />
-
+        <input type={mostrarSenhas ? "text" : "password"} value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} placeholder="••••••••" style={s.input} />
         <label style={s.label}>Nova Senha</label>
-        <input
-          type={mostrarSenhas ? "text" : "password"}
-          value={novaSenha}
-          onChange={(e) => setNovaSenha(e.target.value)}
-          placeholder="Mínimo 6 caracteres"
-          style={s.input}
-        />
-
+        <input type={mostrarSenhas ? "text" : "password"} value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} placeholder="Mínimo 6 caracteres" style={s.input} />
         <label style={s.label}>Confirmar Nova Senha</label>
-        <input
-          type={mostrarSenhas ? "text" : "password"}
-          value={confirmarSenha}
-          onChange={(e) => setConfirmarSenha(e.target.value)}
-          placeholder="Repita a nova senha"
-          style={s.input}
-        />
-
-        <button
-          onClick={() => setMostrarSenhas(!mostrarSenhas)}
-          style={s.btnMostrar}
-        >
+        <input type={mostrarSenhas ? "text" : "password"} value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} placeholder="Repita a nova senha" style={s.input} />
+        <button onClick={() => setMostrarSenhas(!mostrarSenhas)} style={s.btnMostrar}>
           {mostrarSenhas ? "🙈 Ocultar senhas" : "👁 Mostrar senhas"}
         </button>
-
         {feedbackSenha && (
           <div style={{
             ...s.feedback,
@@ -221,20 +181,14 @@ export default function Configuracoes() {
             {feedbackSenha.tipo === "ok" ? "✅" : "❌"} {feedbackSenha.msg}
           </div>
         )}
-
-        <button
-          onClick={alterarSenha}
-          disabled={salvandoSenha}
-          style={{ ...s.btnPrincipal, opacity: salvandoSenha ? 0.6 : 1 }}
-        >
+        <button onClick={alterarSenha} disabled={salvandoSenha} style={{ ...s.btnPrincipal, opacity: salvandoSenha ? 0.6 : 1 }}>
           {salvandoSenha ? "Alterando..." : "Alterar Senha"}
         </button>
       </div>
 
-      {/* DIVISOR */}
       <div style={s.divisor} />
 
-      {/* SEÇÃO — SOBRE */}
+      {/* SOBRE */}
       <div style={s.secao}>
         <div style={s.secaoTitulo}>ℹ️ Sobre o App</div>
         <div style={s.sobreCard}>
@@ -246,24 +200,23 @@ export default function Configuracoes() {
             <span style={s.sobreLabel}>Plataforma</span>
             <span style={s.sobreValor}>Web / PWA</span>
           </div>
-          <div style={s.sobreRow}>
+          <div style={{ ...s.sobreRow, borderBottom: "none" }}>
             <span style={s.sobreLabel}>Desenvolvido por</span>
             <span style={s.sobreValor}>Box Agência</span>
           </div>
         </div>
       </div>
 
-      {/* DIVISOR */}
       <div style={s.divisor} />
 
-      {/* BOTÃO SAIR */}
+      {/* SAIR */}
       <div style={{ padding: "0 16px 40px" }}>
         <button onClick={abrirModalSair} style={s.btnSair}>
           🚪 Sair da Conta
         </button>
       </div>
 
-      {/* MODAL CONFIRMAR SAÍDA */}
+      {/* MODAL SAIR */}
       {modalSair && (
         <div
           ref={overlayRef}
@@ -274,14 +227,12 @@ export default function Configuracoes() {
             transition: "opacity 380ms cubic-bezier(0.32,0.72,0,1)",
           }}
         >
-          <div
-            style={{
-              ...s.modal,
-              transform: animandoModal ? "translateY(0)" : "translateY(100%)",
-              transition: "transform 380ms cubic-bezier(0.32,0.72,0,1)",
-              willChange: "transform",
-            }}
-          >
+          <div style={{
+            ...s.modal,
+            transform: animandoModal ? "translateY(0)" : "translateY(100%)",
+            transition: "transform 380ms cubic-bezier(0.32,0.72,0,1)",
+            willChange: "transform",
+          }}>
             <div style={s.dragHandle} />
             <div style={s.modalIcone}>🚪</div>
             <div style={s.modalTitulo}>Sair da Conta</div>
@@ -367,7 +318,7 @@ function estilos() {
     },
     perfilBadge: {
       display: "inline-block",
-      background: "#1a2f5e",
+      background: "#0a3572",
       color: CORES.orange,
       fontSize: "clamp(10px, 2.8vw, 12px)",
       fontWeight: 700,
@@ -397,7 +348,7 @@ function estilos() {
     input: {
       width: "100%",
       boxSizing: "border-box",
-      background: CORES.bg,
+      background: CORES.card,
       border: `1px solid ${CORES.border}`,
       borderRadius: 10,
       padding: 13,
