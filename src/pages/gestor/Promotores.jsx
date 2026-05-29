@@ -15,8 +15,8 @@ export default function Promotores() {
   const [salvando, setSalvando] = useState(false);
   const [deletando, setDeletando] = useState(null);
   const [busca, setBusca] = useState("");
+  const [abaFiltro, setAbaFiltro] = useState("todos");
 
-  // ── Escuta promotores (perfil === "promotor") ───────────────────────
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "usuarios"), (snap) => {
       setPromotores(
@@ -28,7 +28,6 @@ export default function Promotores() {
     return () => unsub();
   }, []);
 
-  // ── Escuta lojas ────────────────────────────────────────────────────
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "lojas"), (snap) => {
       setLojas(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
@@ -36,14 +35,12 @@ export default function Promotores() {
     return () => unsub();
   }, []);
 
-  // ── Abrir sheet de atribuição ───────────────────────────────────────
   function abrirAtribuir(promotor) {
     setSelecionado(promotor);
     setLojaId(promotor.lojaId || "");
     setSheet(true);
   }
 
-  // ── Salvar atribuição de loja ───────────────────────────────────────
   async function salvarAtribuicao() {
     if (!selecionado) return;
     setSalvando(true);
@@ -60,14 +57,12 @@ export default function Promotores() {
     setSalvando(false);
   }
 
-  // ── Ativar / Desativar promotor ─────────────────────────────────────
   async function toggleAtivo(promotor) {
     await updateDoc(doc(db, "usuarios", promotor.id), {
       ativo: !promotor.ativo,
     });
   }
 
-  // ── Deletar ─────────────────────────────────────────────────────────
   async function deletar(id) {
     if (deletando !== id) { setDeletando(id); return; }
     await deleteDoc(doc(db, "usuarios", id));
@@ -78,10 +73,17 @@ export default function Promotores() {
     return lojas.find((l) => l.id === id)?.nome || null;
   }
 
-  const filtrados = promotores.filter((p) =>
-    p.nome?.toLowerCase().includes(busca.toLowerCase()) ||
-    p.email?.toLowerCase().includes(busca.toLowerCase())
-  );
+  const semLoja = promotores.filter((p) => !p.lojaId);
+
+  const filtrados = promotores
+    .filter((p) => {
+      if (abaFiltro === "semLoja") return !p.lojaId;
+      return true;
+    })
+    .filter((p) =>
+      p.nome?.toLowerCase().includes(busca.toLowerCase()) ||
+      p.email?.toLowerCase().includes(busca.toLowerCase())
+    );
 
   return (
     <div style={{
@@ -91,14 +93,13 @@ export default function Promotores() {
       position: "relative",
     }}>
 
-      {/* Orb */}
       <div style={{
         position: "fixed", width: 250, height: 250, borderRadius: "50%",
         background: "radial-gradient(circle, rgba(224,104,32,0.10) 0%, transparent 70%)",
         top: -50, right: -50, pointerEvents: "none", zIndex: 0,
       }} />
 
-      {/* ── HEADER ── */}
+      {/* HEADER */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
           <p style={{ margin: 0, fontSize: 12, color: T.muted }}>Gerenciar</p>
@@ -114,45 +115,125 @@ export default function Promotores() {
         </div>
       </div>
 
-      {/* ── BUSCA ── */}
+      {/* ALERTA — promotores sem loja */}
+      {semLoja.length > 0 && (
+        <div style={{
+          ...S.card,
+          border: `1px solid rgba(249,168,37,0.45)`,
+          background: "rgba(249,168,37,0.08)",
+          borderRadius: T.r16,
+          padding: "14px 16px",
+          marginBottom: 16,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <span style={{ fontSize: 20 }}>⚠️</span>
+            <div>
+              <p style={{ margin: 0, fontFamily: T.fontTitle, fontSize: 16, fontWeight: 700, color: T.yellow }}>
+                {semLoja.length} promotor{semLoja.length > 1 ? "es" : ""} sem loja vinculada
+              </p>
+              <p style={{ margin: 0, fontSize: 12, color: T.muted }}>
+                O GPS não será validado — vincule uma loja agora
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {semLoja.map((p) => (
+              <div key={p.id} style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                background: "rgba(255,255,255,0.05)", borderRadius: T.r12, padding: "10px 14px",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{
+                    width: 34, height: 34, borderRadius: "50%",
+                    background: "rgba(249,168,37,0.25)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontFamily: T.fontTitle, fontSize: 16, fontWeight: 700,
+                    color: T.yellow, flexShrink: 0,
+                  }}>
+                    {(p.nome || p.email || "?")[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>
+                      {p.nome || "Sem nome"}
+                    </p>
+                    <p style={{ margin: 0, fontSize: 11, color: T.muted }}>{p.email}</p>
+                  </div>
+                </div>
+                <button onClick={() => abrirAtribuir(p)} style={{
+                  ...S.btnOrange,
+                  padding: "8px 14px", fontSize: 13, borderRadius: T.r12,
+                  boxShadow: "none",
+                }}>
+                  Vincular
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* BUSCA */}
       <input
         placeholder="🔍 Buscar por nome ou e-mail..."
         value={busca}
         onChange={(e) => setBusca(e.target.value)}
-        style={{ ...S.input, marginBottom: 16 }}
+        style={{ ...S.input, marginBottom: 12 }}
       />
 
-      {/* ── LISTA ── */}
+      {/* ABAS FILTRO */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        {[
+          { key: "todos",   label: `Todos (${promotores.length})` },
+          { key: "semLoja", label: `⚠️ Sem loja (${semLoja.length})` },
+        ].map((f) => (
+          <button key={f.key} onClick={() => setAbaFiltro(f.key)} style={{
+            ...S.btnGhost,
+            flex: 1, padding: "10px 8px", fontSize: 13,
+            borderColor: abaFiltro === f.key ? T.orange : undefined,
+            color: abaFiltro === f.key ? T.orange : T.muted,
+            fontWeight: abaFiltro === f.key ? 700 : 400,
+          }}>
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* LISTA */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {filtrados.length === 0 && (
           <div style={{ ...S.card, padding: 32, textAlign: "center" }}>
             <p style={{ margin: 0, color: T.muted, fontSize: 14 }}>
-              Nenhum promotor cadastrado.
+              {abaFiltro === "semLoja"
+                ? "✅ Todos os promotores têm loja vinculada!"
+                : "Nenhum promotor cadastrado."}
             </p>
-            <p style={{ margin: "8px 0 0", color: T.muted, fontSize: 12 }}>
-              Crie promotores em Configurações → Criar usuário.
-            </p>
+            {abaFiltro === "todos" && (
+              <p style={{ margin: "8px 0 0", color: T.muted, fontSize: 12 }}>
+                Crie promotores em Configurações → Criar usuário.
+              </p>
+            )}
           </div>
         )}
 
         {filtrados.map((p) => {
           const loja = nomeLoja(p.lojaId);
           const ativo = p.ativo !== false;
+          const semLojaFlag = !p.lojaId;
           return (
             <div key={p.id} style={{
               ...S.card, padding: 16,
-              borderLeft: `3px solid ${ativo ? T.green : T.muted}`,
+              borderLeft: `3px solid ${semLojaFlag ? T.yellow : ativo ? T.green : T.muted}`,
               opacity: ativo ? 1 : 0.6,
             }}>
-              {/* Topo */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  {/* Avatar */}
                   <div style={{
                     width: 42, height: 42, borderRadius: "50%",
-                    background: T.orange,
+                    background: semLojaFlag ? "rgba(249,168,37,0.3)" : T.orange,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontFamily: T.fontTitle, fontSize: 20, fontWeight: 700, flexShrink: 0,
+                    color: semLojaFlag ? T.yellow : "#fff",
                   }}>
                     {(p.nome || p.email || "?")[0].toUpperCase()}
                   </div>
@@ -164,35 +245,36 @@ export default function Promotores() {
                   </div>
                 </div>
 
-                {/* Badge status */}
                 <span style={{
-                  fontSize: 11, padding: "3px 10px", borderRadius: T.pill,
-                  background: ativo ? "rgba(76,175,80,0.15)" : "rgba(255,255,255,0.06)",
-                  color: ativo ? T.green : T.muted, flexShrink: 0,
+                  fontSize: 11, padding: "3px 10px", borderRadius: T.pill, flexShrink: 0,
+                  background: semLojaFlag
+                    ? "rgba(249,168,37,0.15)"
+                    : ativo ? "rgba(76,175,80,0.15)" : "rgba(255,255,255,0.06)",
+                  color: semLojaFlag ? T.yellow : ativo ? T.green : T.muted,
                 }}>
-                  {ativo ? "Ativo" : "Inativo"}
+                  {semLojaFlag ? "⚠️ Sem loja" : ativo ? "Ativo" : "Inativo"}
                 </span>
               </div>
 
-              {/* Loja atribuída */}
               <div style={{
                 margin: "12px 0 0", padding: "10px 14px",
-                background: "rgba(255,255,255,0.04)",
+                background: semLojaFlag ? "rgba(249,168,37,0.06)" : "rgba(255,255,255,0.04)",
+                border: semLojaFlag ? "1px solid rgba(249,168,37,0.2)" : "none",
                 borderRadius: T.r12,
                 display: "flex", justifyContent: "space-between", alignItems: "center",
               }}>
                 <span style={{ fontSize: 13, color: loja ? T.text : T.muted }}>
-                  {loja ? `📍 ${loja}` : "Sem loja atribuída"}
+                  {loja ? `📍 ${loja}` : "Sem loja — GPS ignorado"}
                 </span>
                 <button onClick={() => abrirAtribuir(p)} style={{
-                  ...S.btnGhost, padding: "4px 12px", fontSize: 12, color: T.orange,
-                  border: `1px solid rgba(224,104,32,0.3)`,
+                  ...S.btnGhost, padding: "4px 12px", fontSize: 12,
+                  color: semLojaFlag ? T.yellow : T.orange,
+                  border: `1px solid ${semLojaFlag ? "rgba(249,168,37,0.4)" : "rgba(224,104,32,0.3)"}`,
                 }}>
-                  {loja ? "Trocar" : "Atribuir"}
+                  {loja ? "Trocar" : "Vincular"}
                 </button>
               </div>
 
-              {/* Ações */}
               <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                 <button onClick={() => toggleAtivo(p)} style={{
                   ...S.btnGhost, flex: 1, padding: "8px",
@@ -213,7 +295,7 @@ export default function Promotores() {
         })}
       </div>
 
-      {/* ── BOTTOM SHEET ATRIBUIR LOJA ── */}
+      {/* BOTTOM SHEET VINCULAR LOJA */}
       {sheet && selecionado && (
         <div style={{ position: "fixed", inset: 0, zIndex: 100 }}>
           <div onClick={() => setSheet(false)} style={{
@@ -231,13 +313,12 @@ export default function Promotores() {
           }}>
             <div style={S.grabber} />
             <p style={{ fontFamily: T.fontTitle, fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>
-              Atribuir Loja
+              Vincular Loja
             </p>
             <p style={{ fontSize: 13, color: T.muted, margin: "0 0 20px" }}>
               {selecionado.nome || selecionado.email}
             </p>
 
-            {/* Opção: sem loja */}
             <button onClick={() => setLojaId("")} style={{
               ...S.btnGhost, width: "100%", padding: "14px 16px",
               marginBottom: 8, textAlign: "left", fontSize: 14,
@@ -247,7 +328,6 @@ export default function Promotores() {
               🚫 Sem loja atribuída
             </button>
 
-            {/* Lista de lojas */}
             {lojas.map((loja) => (
               <button key={loja.id} onClick={() => setLojaId(loja.id)} style={{
                 ...S.btnGhost, width: "100%", padding: "14px 16px",

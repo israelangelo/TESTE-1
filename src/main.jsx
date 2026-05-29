@@ -2,19 +2,24 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { AuthProvider } from './context/AuthContext'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <AuthProvider>
+      <App />
+    </AuthProvider>
   </StrictMode>,
 )
 
-// ── PWA: registrar Service Worker ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js')
-      .then(reg => console.log('[PWA] Service Worker registrado:', reg.scope))
-      .catch(err => console.warn('[PWA] SW falhou (dev mode):', err));
-  });
+      .then(reg => {
+        console.log('[PWA] SW registrado:', reg.scope)
+        reg.update()
+      })
+      .catch(err => console.warn('[PWA] SW falhou:', err))
+  })
 }

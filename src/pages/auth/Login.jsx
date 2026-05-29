@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { T, S } from '../../theme/tokens';
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+} from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 
@@ -10,19 +17,25 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [aba, setAba] = useState('entrar'); // 'entrar' ou 'cadastrar'
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [nome, setNome] = useState('');
+  const [aba, setAba]           = useState('entrar');
+  const [email, setEmail]       = useState('');
+  const [senha, setSenha]       = useState('');
+  const [nome, setNome]         = useState('');
   const [perfilSel, setPerfilSel] = useState('promotor');
-  const [erro, setErro] = useState('');
-  const [sucesso, setSucesso] = useState('');
+  const [lembrar, setLembrar]   = useState(true);
+  const [erro, setErro]         = useState('');
+  const [sucesso, setSucesso]   = useState('');
   const [carregando, setCarregando] = useState(false);
 
   async function entrar(e) {
     e.preventDefault();
     setErro(''); setCarregando(true);
     try {
+      const auth = getAuth();
+      await setPersistence(
+        auth,
+        lembrar ? browserLocalPersistence : browserSessionPersistence
+      );
       const perfil = await login(email, senha);
       if (perfil === 'gestor') navigate('/gestor');
       else if (perfil === 'promotor') navigate('/promotor');
@@ -40,6 +53,10 @@ export default function Login() {
     setErro(''); setCarregando(true);
     try {
       const auth = getAuth();
+      await setPersistence(
+        auth,
+        lembrar ? browserLocalPersistence : browserSessionPersistence
+      );
       const { user } = await createUserWithEmailAndPassword(auth, email, senha);
       await updateProfile(user, { displayName: nome });
       await setDoc(doc(db, 'usuarios', user.uid), {
@@ -59,6 +76,19 @@ export default function Login() {
     setCarregando(false);
   }
 
+  const lembrarRow = {
+    display: 'flex', alignItems: 'center',
+    gap: 10, marginTop: 4, cursor: 'pointer',
+    userSelect: 'none',
+  };
+  const checkboxBox = {
+    width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+    border: `2px solid ${lembrar ? '#E06820' : 'rgba(255,255,255,0.2)'}`,
+    background: lembrar ? '#E06820' : 'transparent',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    transition: 'all .2s',
+  };
+
   return (
     <div style={{
       minHeight: '100vh', width: '100%',
@@ -69,7 +99,6 @@ export default function Login() {
       boxSizing: 'border-box',
     }}>
 
-      {/* Google Fonts */}
       <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
 
       {/* Logo */}
@@ -84,7 +113,7 @@ export default function Login() {
         <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: 6 }}>AGÊNCIA</div>
       </div>
 
-      {/* Card principal */}
+      {/* Card */}
       <div style={{
         width: '100%', maxWidth: 440,
         background: 'rgba(3,39,116,0.7)',
@@ -112,21 +141,46 @@ export default function Login() {
           ))}
         </div>
 
-        {/* FORM ENTRAR */}
+        {/* ── ENTRAR ── */}
         {aba === 'entrar' && (
-          <form onSubmit={entrar} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <form
+            id="login-form"
+            autoComplete="on"
+            onSubmit={entrar}
+            style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+          >
             <input
-              type="email" placeholder="E-mail"
-              value={email} onChange={e => setEmail(e.target.value)}
-              autoComplete="email"
+              id="email-login"
+              name="email"
+              type="email"
+              placeholder="E-mail"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              autoComplete="username email"
+              inputMode="email"
+              required
               style={inputStyle}
             />
             <input
-              type="password" placeholder="Senha"
-              value={senha} onChange={e => setSenha(e.target.value)}
+              id="senha-login"
+              name="password"
+              type="password"
+              placeholder="Senha"
+              value={senha}
+              onChange={e => setSenha(e.target.value)}
               autoComplete="current-password"
+              required
               style={inputStyle}
             />
+
+            {/* Lembrar de mim */}
+            <div style={lembrarRow} onClick={() => setLembrar(v => !v)}>
+              <div style={checkboxBox}>
+                {lembrar && <span style={{ fontSize: 12, color: '#fff', fontWeight: 900 }}>✓</span>}
+              </div>
+              <span style={{ fontSize: 14, color: '#aab4cc' }}>Lembrar de mim</span>
+            </div>
+
             {erro && <p style={erroStyle}>{erro}</p>}
             <button type="submit" disabled={carregando} style={btnStyle}>
               {carregando ? 'Entrando...' : 'ENTRAR'}
@@ -134,29 +188,51 @@ export default function Login() {
           </form>
         )}
 
-        {/* FORM CADASTRAR */}
+        {/* ── CADASTRAR ── */}
         {aba === 'cadastrar' && (
-          <form onSubmit={cadastrar} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <form
+            id="signup-form"
+            autoComplete="on"
+            onSubmit={cadastrar}
+            style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+          >
             <input
-              type="text" placeholder="Nome completo"
-              value={nome} onChange={e => setNome(e.target.value)}
+              id="nome-criar"
+              name="name"
+              type="text"
+              placeholder="Nome completo"
+              value={nome}
+              onChange={e => setNome(e.target.value)}
               autoComplete="name"
+              required
               style={inputStyle}
             />
             <input
-              type="email" placeholder="E-mail"
-              value={email} onChange={e => setEmail(e.target.value)}
-              autoComplete="email"
+              id="email-criar"
+              name="email"
+              type="email"
+              placeholder="E-mail"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              autoComplete="username email"
+              inputMode="email"
+              required
               style={inputStyle}
             />
             <input
-              type="password" placeholder="Senha (mín. 6 caracteres)"
-              value={senha} onChange={e => setSenha(e.target.value)}
+              id="senha-criar"
+              name="password"
+              type="password"
+              placeholder="Senha (mín. 6 caracteres)"
+              value={senha}
+              onChange={e => setSenha(e.target.value)}
               autoComplete="new-password"
+              minLength={6}
+              required
               style={inputStyle}
             />
 
-            {/* Seletor de perfil */}
+            {/* Perfil */}
             <p style={{ color: '#aab4cc', fontSize: 13, margin: '4px 0 2px', textAlign: 'center' }}>Você é:</p>
             <div style={{ display: 'flex', gap: 8 }}>
               {['promotor', 'cliente', 'gestor'].map(p => (
@@ -171,6 +247,14 @@ export default function Login() {
                   textTransform: 'uppercase',
                 }}>{p}</button>
               ))}
+            </div>
+
+            {/* Lembrar de mim */}
+            <div style={lembrarRow} onClick={() => setLembrar(v => !v)}>
+              <div style={checkboxBox}>
+                {lembrar && <span style={{ fontSize: 12, color: '#fff', fontWeight: 900 }}>✓</span>}
+              </div>
+              <span style={{ fontSize: 14, color: '#aab4cc' }}>Lembrar de mim</span>
             </div>
 
             {erro && <p style={erroStyle}>{erro}</p>}
