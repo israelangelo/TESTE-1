@@ -7,10 +7,10 @@ import { useAuth } from "../../context/AuthContext";
 import { T, S } from "../../theme/tokens";
 
 const NAV = [
-  { key: "inicio",   icon: "⊞", label: "Início" },
-  { key: "visita",   icon: "📍", label: "Visita" },
-  { key: "tarefas",  icon: "✓",  label: "Tarefas" },
-  { key: "perfil",   icon: "👤", label: "Perfil" },
+  { key: "inicio",  icon: "⊞", label: "Início" },
+  { key: "visita",  icon: "📍", label: "Visita" },
+  { key: "tarefas", icon: "✓",  label: "Tarefas" },
+  { key: "perfil",  icon: "👤", label: "Perfil" },
 ];
 
 const TAREFAS_INIT = [
@@ -34,7 +34,6 @@ export default function PromotorDashboard() {
   const [salvando, setSalvando] = useState(false);
   const nome = userData?.nome || currentUser?.email?.split("@")[0] || "Promotor";
 
-  // Cronômetro
   useEffect(() => {
     if (!checkinAtivo) return;
     const t = setInterval(() => setTempo(p => p + 1), 1000);
@@ -53,28 +52,33 @@ export default function PromotorDashboard() {
 
   async function fazerCheckin() {
     setGpsStatus("buscando");
+    if (!navigator.geolocation) { setGpsStatus("erro"); return; }
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setGpsStatus("ok");
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const precisao = pos.coords.accuracy;
+        setCoords({ lat, lng, precisao });
         setSalvando(true);
         try {
           await addDoc(collection(db, "checkins"), {
             uid: currentUser.uid,
-            nome,
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
+            nome, lat, lng, precisao,
             tipo: "checkin",
             timestamp: serverTimestamp(),
           });
-        } catch (e) { console.error(e); }
+          setGpsStatus("ok");
+          setCheckinAtivo(true);
+          setTempo(0);
+          setSheet(false);
+        } catch (e) {
+          console.error(e);
+          setGpsStatus("erro");
+        }
         setSalvando(false);
-        setCheckinAtivo(true);
-        setTempo(0);
-        setSheet(false);
       },
-      () => setGpsStatus("erro"),
-      { enableHighAccuracy: true, timeout: 10000 }
+      (err) => { console.error(err); setGpsStatus("erro"); },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   }
 
@@ -111,7 +115,6 @@ export default function PromotorDashboard() {
       overflow: "hidden",
     }}>
 
-      {/* Orb */}
       <div style={{
         position: "absolute", width: 280, height: 280, borderRadius: "50%",
         background: "radial-gradient(circle, rgba(224,104,32,0.12) 0%, transparent 70%)",
@@ -134,12 +137,9 @@ export default function PromotorDashboard() {
             </h1>
           </div>
           <div style={{
-            ...S.card,
-            padding: "6px 14px",
+            ...S.card, padding: "6px 14px",
             borderRadius: T.pill,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
+            display: "flex", alignItems: "center", gap: 6,
           }}>
             <span style={{
               width: 8, height: 8, borderRadius: "50%",
@@ -153,7 +153,6 @@ export default function PromotorDashboard() {
           </div>
         </div>
 
-        {/* Cronômetro */}
         {checkinAtivo && (
           <div style={{
             marginTop: 16, padding: "12px 16px",
@@ -173,11 +172,8 @@ export default function PromotorDashboard() {
       {/* CONTEÚDO */}
       <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 100px" }}>
 
-        {/* ABA INÍCIO */}
         {aba === "inicio" && (
           <div style={{ animation: "fadeInUp 0.4s cubic-bezier(0.34,1.56,0.64,1)" }}>
-
-            {/* Cards resumo */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
               {[
                 { label: "Tarefas", valor: `${tarefasFeitas}/${tarefas.length}`, cor: T.orange },
@@ -190,54 +186,44 @@ export default function PromotorDashboard() {
               ))}
             </div>
 
-            {/* Botão principal */}
             {!checkinAtivo ? (
               <button onClick={abrirSheet} style={{
-                ...S.btnOrange,
-                width: "100%", padding: "18px",
-                fontSize: 20, borderRadius: T.r20,
-                marginBottom: 12,
-                transition: T.spring,
+                ...S.btnOrange, width: "100%", padding: "18px",
+                fontSize: 20, borderRadius: T.r20, marginBottom: 12,
               }}>
                 📍 Fazer Check-in
               </button>
             ) : (
               <button onClick={fazerCheckout} disabled={salvando} style={{
-                ...S.btnGhost,
-                width: "100%", padding: "18px",
-                fontSize: 18, borderRadius: T.r20,
-                marginBottom: 12, color: "#ff6b6b",
-                border: "1px solid rgba(244,67,54,0.3)",
-                transition: T.spring,
+                ...S.btnGhost, width: "100%", padding: "18px",
+                fontSize: 18, borderRadius: T.r20, marginBottom: 12,
+                color: "#ff6b6b", border: "1px solid rgba(244,67,54,0.3)",
               }}>
                 {salvando ? "Salvando..." : "🏁 Fazer Check-out"}
               </button>
             )}
 
-            {/* Loja ativa */}
             {checkinAtivo && coords && (
               <div style={{ ...S.card, padding: 16, marginBottom: 12 }}>
-                <p style={{ margin: "0 0 4px", fontSize: 12, color: T.muted }}>📍 Localização registrada</p>
-                <p style={{ margin: 0, fontSize: 13, color: T.text }}>
+                <p style={{ margin: "0 0 6px", fontSize: 12, color: T.muted }}>📍 Localização registrada</p>
+                <p style={{ margin: "0 0 4px", fontSize: 13, color: T.text }}>
                   {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+                </p>
+                <p style={{ margin: 0, fontSize: 11, color: T.muted }}>
+                  Precisão: ±{Math.round(coords.precisao)}m
                 </p>
               </div>
             )}
 
-            {/* Acesso rápido */}
             <p style={{ fontFamily: T.fontTitle, fontSize: 18, fontWeight: 700, margin: "20px 0 10px" }}>Acesso rápido</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
-                { icon: "✓", label: "Tarefas do dia", key: "tarefas" },
+                { icon: "✓",  label: "Tarefas do dia", key: "tarefas" },
                 { icon: "📷", label: "Registrar fotos", key: "visita" },
               ].map(item => (
                 <button key={item.key} onClick={() => setAba(item.key)} style={{
-                  ...S.btnGhost,
-                  padding: "16px",
-                  textAlign: "left",
-                  fontSize: 15,
-                  display: "flex", alignItems: "center", gap: 10,
-                  transition: T.smooth,
+                  ...S.btnGhost, padding: "16px", textAlign: "left",
+                  fontSize: 15, display: "flex", alignItems: "center", gap: 10,
                 }}>
                   <span style={{ fontSize: 20 }}>{item.icon}</span>
                   {item.label}
@@ -247,7 +233,6 @@ export default function PromotorDashboard() {
           </div>
         )}
 
-        {/* ABA TAREFAS */}
         {aba === "tarefas" && (
           <div style={{ animation: "fadeInUp 0.4s cubic-bezier(0.34,1.56,0.64,1)" }}>
             <p style={{ fontFamily: T.fontTitle, fontSize: 22, fontWeight: 700, margin: "0 0 16px" }}>
@@ -258,12 +243,10 @@ export default function PromotorDashboard() {
                 <button key={tarefa.id} onClick={() => setTarefas(prev =>
                   prev.map(t => t.id === tarefa.id ? { ...t, feita: !t.feita } : t)
                 )} style={{
-                  ...S.card,
-                  padding: "16px",
+                  ...S.card, padding: "16px",
                   display: "flex", alignItems: "center", gap: 12,
                   cursor: "pointer", textAlign: "left",
                   borderLeft: tarefa.feita ? `3px solid ${T.green}` : `3px solid ${T.border}`,
-                  transition: T.smooth,
                 }}>
                   <div style={{
                     width: 24, height: 24, borderRadius: "50%",
@@ -271,14 +254,13 @@ export default function PromotorDashboard() {
                     border: `2px solid ${tarefa.feita ? T.green : T.muted}`,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     flexShrink: 0,
-                    transition: T.spring,
                   }}>
                     {tarefa.feita && <span style={{ fontSize: 12, color: "#fff" }}>✓</span>}
                   </div>
                   <span style={{
-                    fontSize: 15, color: tarefa.feita ? T.muted : T.text,
+                    fontSize: 15,
+                    color: tarefa.feita ? T.muted : T.text,
                     textDecoration: tarefa.feita ? "line-through" : "none",
-                    transition: T.smooth,
                   }}>{tarefa.texto}</span>
                 </button>
               ))}
@@ -286,12 +268,11 @@ export default function PromotorDashboard() {
           </div>
         )}
 
-        {/* ABA VISITA */}
         {aba === "visita" && (
           <div style={{ animation: "fadeInUp 0.4s cubic-bezier(0.34,1.56,0.64,1)" }}>
             <p style={{ fontFamily: T.fontTitle, fontSize: 22, fontWeight: 700, margin: "0 0 16px" }}>Registrar Fotos</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {["Ponto Extra", "Geladeira", "Display", "Encarte", "Clip Strip", "Material PDV", "Check Out"].map(tipo => (
+              {["Ponto Extra","Geladeira","Display","Encarte","Clip Strip","Material PDV","Check Out"].map(tipo => (
                 <div key={tipo} style={{ ...S.card, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 15 }}>📷 {tipo}</span>
                   <span style={{ fontSize: 12, color: T.muted, background: "rgba(255,255,255,0.06)", padding: "4px 10px", borderRadius: T.pill }}>
@@ -303,7 +284,6 @@ export default function PromotorDashboard() {
           </div>
         )}
 
-        {/* ABA PERFIL */}
         {aba === "perfil" && (
           <div style={{ animation: "fadeInUp 0.4s cubic-bezier(0.34,1.56,0.64,1)" }}>
             <div style={{ ...S.cardDark, padding: 24, borderRadius: T.r20, textAlign: "center", marginBottom: 16 }}>
@@ -324,10 +304,8 @@ export default function PromotorDashboard() {
               }}>Promotor</span>
             </div>
             <button onClick={async () => { await signOut(auth); navigate("/login"); }} style={{
-              ...S.btnGhost,
-              width: "100%", padding: 16,
-              color: "#ff6b6b", border: "1px solid rgba(244,67,54,0.25)",
-              fontSize: 15,
+              ...S.btnGhost, width: "100%", padding: 16,
+              color: "#ff6b6b", border: "1px solid rgba(244,67,54,0.25)", fontSize: 15,
             }}>
               🚪 Sair da conta
             </button>
@@ -351,15 +329,12 @@ export default function PromotorDashboard() {
           <button key={item.key} onClick={() => setAba(item.key)} style={{
             flex: 1, background: "none", border: "none", cursor: "pointer",
             display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-            padding: "8px 0",
-            transition: T.smooth,
+            padding: "8px 0", transition: T.smooth,
           }}>
             <span style={{ fontSize: 20 }}>{item.icon}</span>
-            <span style={{
-              fontSize: 11, fontWeight: 600,
-              color: aba === item.key ? T.orange : T.muted,
-              transition: T.smooth,
-            }}>{item.label}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: aba === item.key ? T.orange : T.muted }}>
+              {item.label}
+            </span>
             {aba === item.key && (
               <div style={{ width: 4, height: 4, borderRadius: "50%", background: T.orange }} />
             )}
@@ -411,7 +386,9 @@ export default function PromotorDashboard() {
               </div>
             )}
             {salvando && (
-              <p style={{ textAlign: "center", color: T.muted, marginTop: 12, fontSize: 13 }}>Salvando no servidor...</p>
+              <p style={{ textAlign: "center", color: T.muted, marginTop: 12, fontSize: 13 }}>
+                Salvando no servidor...
+              </p>
             )}
           </div>
         </div>
