@@ -1,7 +1,17 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 
-// Configuração otimizada para React + Vite (o próprio Vite cuidará da divisão dos arquivos automaticamente)
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',  // ← atualiza sozinho sempre
+      workbox: {
+        skipWaiting: true,          // ← não espera fechar o app
+        clientsClaim: true,         // ← assume controle imediato
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+      },
+    }),
+  ],
 })
