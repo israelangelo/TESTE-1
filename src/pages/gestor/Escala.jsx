@@ -21,6 +21,7 @@ export default function Escala() {
   const [promotores, setPromotores] = useState([]);
   const [lojas, setLojas]           = useState([]);
   const [escalas, setEscalas]       = useState([]);
+  const [carregando, setCarregando] = useState(true);
 
   const [data, setData]             = useState(hoje());
   const [promotorId, setPromotorId] = useState('');
@@ -34,14 +35,20 @@ export default function Escala() {
   useEffect(() => { carregar(); }, []);
 
   async function carregar() {
-    const [snapP, snapL, snapE] = await Promise.all([
-      getDocs(query(collection(db, 'usuarios'), where('perfil', '==', 'promotor'))),
-      getDocs(collection(db, 'lojas')),
-      getDocs(collection(db, 'escalas')),
-    ]);
-    setPromotores(snapP.docs.map(d => ({ id: d.id, ...d.data() })));
-    setLojas(snapL.docs.map(d => ({ id: d.id, ...d.data() })));
-    setEscalas(snapE.docs.map(d => ({ id: d.id, ...d.data() })));
+    setCarregando(true);
+    try {
+      const [snapP, snapL, snapE] = await Promise.all([
+        getDocs(query(collection(db, 'usuarios'), where('perfil', '==', 'promotor'))),
+        getDocs(collection(db, 'lojas')),
+        getDocs(collection(db, 'escalas')),
+      ]);
+      setPromotores(snapP.docs.map(d => ({ id: d.id, ...d.data() })));
+      setLojas(snapL.docs.map(d => ({ id: d.id, ...d.data() })));
+      setEscalas(snapE.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch {
+      showToast('Erro ao carregar dados ❌');
+    }
+    setCarregando(false);
   }
 
   function showToast(msg) {
@@ -106,8 +113,28 @@ export default function Escala() {
     setLojasSel([]);
   }
 
-  const nomePromotor = id => promotores.find(p => p.id === id)?.nome || id;
-  const nomeLoja     = id => lojas.find(l => l.id === id)?.nome || id;
+  // ✅ BUG 6 CORRIGIDO — nunca mostra ID bruto do Firestore
+  function resolverNome(lista, id, tipo) {
+    if (!id) return `${tipo} não definido`;
+    if (carregando) return '…';
+    const item = lista.find(x => x.id === id);
+    if (!item) return `${tipo} não encontrado`;
+    return item.nome || item.nomeFantasia || `${tipo} sem nome`;
+  }
+
+  const nomePromotor = (id) => resolverNome(promotores, id, 'Promotor');
+  const nomeLoja     = (id) => resolverNome(lojas, id, 'Loja');
+
+  // Tag visual para quando o dado não foi encontrado
+  function TagNome({ id, lista, tipo }) {
+    const nome = resolverNome(lista, id, tipo);
+    const naoEncontrado = !carregando && id && !lista.find(x => x.id === id);
+    return (
+      <span style={{ color: naoEncontrado ? T.orange : 'inherit' }}>
+        {naoEncontrado ? `⚠️ ${nome}` : nome}
+      </span>
+    );
+  }
 
   const porData = escalas.reduce((acc, e) => {
     (acc[e.data] = acc[e.data] || []).push(e);
@@ -158,7 +185,6 @@ export default function Escala() {
           overflow: 'hidden',
           padding: 0,
         }}>
-          {/* título seção */}
           <div style={{
             padding: '14px 18px',
             fontSize: 11, fontWeight: 700,
@@ -172,7 +198,6 @@ export default function Escala() {
           </div>
 
           <div style={{ padding: '16px 18px 4px' }}>
-            {/* Data */}
             <label style={{ fontSize: 12, color: T.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>
               📅 Data
             </label>
@@ -188,7 +213,6 @@ export default function Escala() {
               }}
             />
 
-            {/* Promotor */}
             <label style={{ fontSize: 12, color: T.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>
               👤 Promotor
             </label>
@@ -201,21 +225,26 @@ export default function Escala() {
                 marginBottom: 16,
               }}
             >
-              <option value="">Selecione…</option>
+              <option value="">
+                {carregando ? 'Carregando…' : 'Selecione…'}
+              </option>
               {promotores.map(p => (
-                <option key={p.id} value={p.id}>{p.nome}</option>
+                <option key={p.id} value={p.id}>{p.nome || p.email || p.id}</option>
               ))}
             </select>
           </div>
 
-          {/* Lojas chips */}
           <div style={{ padding: '0 18px 4px' }}>
             <label style={{ fontSize: 12, color: T.muted, fontWeight: 600, display: 'block', marginBottom: 10 }}>
               🏪 Lojas — toque para selecionar
             </label>
           </div>
 
-          {lojas.length === 0 ? (
+          {carregando ? (
+            <div style={{ padding: '12px 18px 18px', color: T.muted, fontSize: 14 }}>
+              Carregando lojas…
+            </div>
+          ) : lojas.length === 0 ? (
             <div style={{ padding: '12px 18px 18px', color: T.muted, fontSize: 14 }}>
               Nenhuma loja cadastrada.
             </div>
@@ -241,7 +270,7 @@ export default function Escala() {
                       color: sel ? T.orange : T.muted,
                     }}
                   >
-                    {sel ? '✓ ' : ''}{l.nome}
+                    {sel ? '✓ ' : ''}{l.nome || l.nomeFantasia || '(sem nome)'}
                   </div>
                 );
               })}
@@ -249,7 +278,6 @@ export default function Escala() {
           )}
         </div>
 
-        {/* Botões salvar/cancelar */}
         <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
           {editId && (
             <button
@@ -284,7 +312,12 @@ export default function Escala() {
           Escalas cadastradas
         </div>
 
-        {datasOrdenadas.length === 0 ? (
+        {carregando ? (
+          <div style={{ ...S.card, padding: 40, textAlign: 'center' }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>⏳</div>
+            <p style={{ color: T.muted, margin: 0 }}>Carregando escalas…</p>
+          </div>
+        ) : datasOrdenadas.length === 0 ? (
           <div style={{ ...S.card, padding: 40, textAlign: 'center' }}>
             <div style={{ fontSize: 36, marginBottom: 12 }}>📭</div>
             <p style={{ color: T.muted, margin: 0 }}>Nenhuma escala cadastrada ainda.</p>
@@ -292,7 +325,6 @@ export default function Escala() {
         ) : (
           datasOrdenadas.map(d => (
             <div key={d} style={{ marginBottom: 20 }}>
-              {/* label do dia */}
               <div style={{
                 fontSize: 11, fontWeight: 700,
                 letterSpacing: 1.4, textTransform: 'uppercase',
@@ -315,11 +347,12 @@ export default function Escala() {
                   }}
                 >
                   <div>
+                    {/* ✅ Usa TagNome — nunca mostra ID bruto */}
                     <div style={{ fontFamily: T.fontTitle, fontSize: 17, color: T.text }}>
-                      {nomePromotor(esc.promotorId)}
+                      <TagNome id={esc.promotorId} lista={promotores} tipo="Promotor" />
                     </div>
                     <div style={{ fontSize: 12, color: T.muted, marginTop: 3 }}>
-                      🏪 {(esc.lojas || []).slice(0, 2).map(nomeLoja).join(', ')}
+                      🏪 {(esc.lojas || []).slice(0, 2).map(id => nomeLoja(id)).join(', ')}
                       {(esc.lojas || []).length > 2 ? ` +${esc.lojas.length - 2}` : ''}
                     </div>
                   </div>
@@ -361,7 +394,6 @@ export default function Escala() {
             paddingBottom: 48,
             animation: 'slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1)',
           }}>
-            {/* grabber */}
             <div style={{ ...S.grabber, paddingTop: 12 }} />
 
             <div style={{
@@ -402,7 +434,9 @@ export default function Escala() {
               }}>👤</div>
               <div>
                 <div style={{ fontSize: 11, color: T.muted, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 1 }}>Promotor</div>
-                <div style={{ fontSize: 15, fontWeight: 700 }}>{nomePromotor(sheet.promotorId)}</div>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>
+                  <TagNome id={sheet.promotorId} lista={promotores} tipo="Promotor" />
+                </div>
               </div>
             </div>
 
@@ -429,7 +463,7 @@ export default function Escala() {
                       padding: '4px 12px',
                       fontSize: 12, color: '#ccd5ee',
                     }}>
-                      {nomeLoja(id)}
+                      <TagNome id={id} lista={lojas} tipo="Loja" />
                     </span>
                   ))}
                 </div>
