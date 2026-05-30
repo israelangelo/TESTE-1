@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import {
+  collection, query, where, orderBy, onSnapshot
+} from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { T, S } from '../../theme/tokens';
 
@@ -18,8 +20,8 @@ const TIPOS_FOTO = [
 ];
 
 export default function Relatorios() {
-  const navigate = useNavigate();
-  const hoje = new Date().toISOString().split('T')[0];
+  const navigate  = useNavigate();
+  const hoje      = new Date().toISOString().split('T')[0];
 
   const [aba, setAba]               = useState('checkins');
   const [data, setData]             = useState(hoje);
@@ -28,102 +30,132 @@ export default function Relatorios() {
   const [lojas, setLojas]           = useState([]);
   const [filtroPromotor, setFiltroPromotor] = useState('');
   const [filtroLoja, setFiltroLoja]         = useState('');
-  const [carregando, setCarregando]         = useState(false);
+  const [carregando, setCarregando]         = useState(true);
   const [fotoAberta, setFotoAberta]         = useState(null);
 
-  // Fotos PDV
   const [fotosPDV, setFotosPDV]             = useState([]);
-  const [carregandoFotos, setCarregandoFotos] = useState(false);
+  const [carregandoFotos, setCarregandoFotos] = useState(true);
   const [filtroFotoLoja, setFiltroFotoLoja] = useState('');
   const [filtroFotoTipo, setFiltroFotoTipo] = useState('');
 
-  // Rupturas
   const [rupturas, setRupturas]             = useState([]);
-  const [carregandoRupturas, setCarregandoRupturas] = useState(false);
+  const [carregandoRupturas, setCarregandoRupturas] = useState(true);
 
-  useEffect(() => { carregarAuxiliares(); }, []);
-  useEffect(() => { if (aba === 'checkins') buscarCheckins(); }, [data, filtroPromotor, filtroLoja, aba]);
-  useEffect(() => { if (aba === 'fotos')    buscarFotos();    }, [data, filtroFotoLoja, filtroFotoTipo, aba]);
-  useEffect(() => { if (aba === 'rupturas') buscarRupturas(); }, [data, aba]);
+  // Refs para guardar os unsubscribers dos listeners de data
+  const unsubCheckins  = useRef(null);
+  const unsubFotos     = useRef(null);
+  const unsubRupturas  = useRef(null);
 
-  async function carregarAuxiliares() {
-    const [snapP, snapL] = await Promise.all([
-      getDocs(collection(db, 'usuarios')),
-      getDocs(collection(db, 'lojas')),
-    ]);
-    setPromotores(snapP.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => u.perfil === 'promotor'));
-    setLojas(snapL.docs.map(d => ({ id: d.id, ...d.data() })));
-  }
+  // ✅ Auxiliares (promotores e lojas) — listener permanente
+  useEffect(() => {
+    const unsubP = onSnapshot(
+      query(collection(db, 'usuarios')),
+      snap => setPromotores(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => u.perfil === 'promotor')),
+    );
+    const unsubL = onSnapshot(
+      collection(db, 'lojas'),
+      snap => setLojas(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+    );
+    return () => { unsubP(); unsubL(); };
+  }, []);
 
-  async function buscarCheckins() {
+  // ✅ Checkins — re-subscribe quando data ou aba mudar
+  useEffect(() => {
+    if (aba !== 'checkins') return;
+    if (unsubCheckins.current) unsubCheckins.current();
     setCarregando(true);
-    try {
-      const inicio = new Date(data + 'T00:00:00');
-      const fim    = new Date(data + 'T23:59:59');
-      let q = query(
+
+    const inicio = new Date(data + 'T00:00:00');
+    const fim    = new Date(data + 'T23:59:59');
+
+    unsubCheckins.current = onSnapshot(
+      query(
         collection(db, 'checkins'),
         where('timestamp', '>=', inicio),
         where('timestamp', '<=', fim),
         orderBy('timestamp', 'desc')
-      );
-      const snap = await getDocs(q);
-      let lista = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (filtroPromotor) lista = lista.filter(c => c.uid === filtroPromotor);
-      if (filtroLoja)     lista = lista.filter(c => c.lojaId === filtroLoja);
-      setCheckins(lista);
-    } catch (e) { console.error(e); }
-    setCarregando(false);
-  }
+      ),
+      snap => {
+        setCheckins(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setCarregando(false);
+      },
+      err => { console.error('checkins:', err); setCarregando(false); }
+    );
 
-  async function buscarFotos() {
+    return () => { if (unsubCheckins.current) unsubCheckins.current(); };
+  }, [data, aba]);
+
+  // ✅ Fotos PDV — re-subscribe quando data ou aba mudar
+  useEffect(() => {
+    if (aba !== 'fotos') return;
+    if (unsubFotos.current) unsubFotos.current();
     setCarregandoFotos(true);
-    try {
-      const inicio = new Date(data + 'T00:00:00');
-      const fim    = new Date(data + 'T23:59:59');
-      let q = query(
+
+    const inicio = new Date(data + 'T00:00:00');
+    const fim    = new Date(data + 'T23:59:59');
+
+    unsubFotos.current = onSnapshot(
+      query(
         collection(db, 'fotos_pdv'),
         where('timestamp', '>=', inicio),
         where('timestamp', '<=', fim),
         orderBy('timestamp', 'desc')
-      );
-      const snap = await getDocs(q);
-      let lista = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (filtroFotoLoja) lista = lista.filter(f => f.lojaId === filtroFotoLoja);
-      if (filtroFotoTipo) lista = lista.filter(f => f.tipo  === filtroFotoTipo);
-      setFotosPDV(lista);
-    } catch (e) { console.error(e); }
-    setCarregandoFotos(false);
-  }
+      ),
+      snap => {
+        setFotosPDV(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setCarregandoFotos(false);
+      },
+      err => { console.error('fotos:', err); setCarregandoFotos(false); }
+    );
 
-  async function buscarRupturas() {
+    return () => { if (unsubFotos.current) unsubFotos.current(); };
+  }, [data, aba]);
+
+  // ✅ Rupturas — re-subscribe quando data ou aba mudar
+  useEffect(() => {
+    if (aba !== 'rupturas') return;
+    if (unsubRupturas.current) unsubRupturas.current();
     setCarregandoRupturas(true);
-    try {
-      const q = query(collection(db, 'rupturas'), where('data', '==', data));
-      const snap = await getDocs(q);
-      setRupturas(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    } catch (e) { console.error(e); }
-    setCarregandoRupturas(false);
-  }
 
-  // Agrupamentos
-  const porPromotor = checkins.reduce((acc, c) => {
+    unsubRupturas.current = onSnapshot(
+      query(collection(db, 'rupturas'), where('data', '==', data)),
+      snap => {
+        setRupturas(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setCarregandoRupturas(false);
+      },
+      err => { console.error('rupturas:', err); setCarregandoRupturas(false); }
+    );
+
+    return () => { if (unsubRupturas.current) unsubRupturas.current(); };
+  }, [data, aba]);
+
+  // Filtros locais (não precisam de novo fetch)
+  const checkinsFiltrados = checkins
+    .filter(c => !filtroPromotor || c.uid === filtroPromotor)
+    .filter(c => !filtroLoja     || c.lojaId === filtroLoja);
+
+  const fotosFiltradas = fotosPDV
+    .filter(f => !filtroFotoLoja || f.lojaId === filtroFotoLoja)
+    .filter(f => !filtroFotoTipo || f.tipo   === filtroFotoTipo);
+
+  const porPromotor = checkinsFiltrados.reduce((acc, c) => {
     if (!acc[c.uid]) acc[c.uid] = { nome: c.nome, checkins: [] };
     acc[c.uid].checkins.push(c);
     return acc;
   }, {});
 
-  const fotosPorLoja = fotosPDV.reduce((acc, f) => {
+  const fotosPorLoja = fotosFiltradas.reduce((acc, f) => {
     const k = f.lojaId || 'sem_loja';
     if (!acc[k]) acc[k] = { lojaNome: f.lojaNome, fotos: [] };
     acc[k].fotos.push(f);
     return acc;
   }, {});
 
-  const totalCheckins      = checkins.filter(c => c.tipo === 'checkin').length;
-  const totalCheckouts     = checkins.filter(c => c.tipo === 'checkout').length;
-  const promotoresAtivos   = Object.keys(porPromotor).length;
-  const lojasVisitadas     = [...new Set(checkins.map(c => c.lojaId))].length;
-  const totalRupturas      = rupturas.reduce((acc, r) => acc + (r.itens?.filter(i => i.ruptura).length || 0), 0);
+  const totalCheckins    = checkinsFiltrados.filter(c => c.tipo === 'checkin').length;
+  const totalCheckouts   = checkinsFiltrados.filter(c => c.tipo === 'checkout').length;
+  const promotoresAtivos = Object.keys(porPromotor).length;
+  const lojasVisitadas   = [...new Set(checkinsFiltrados.map(c => c.lojaId))].length;
+  const totalRupturas    = rupturas.reduce((acc, r) => acc + (r.itens?.filter(i => i.ruptura).length || 0), 0);
 
   function formatarHora(ts) {
     if (!ts) return '--';
@@ -137,7 +169,6 @@ export default function Relatorios() {
   }
 
   const selectStyle = { ...S.input, padding: '10px 14px', fontSize: 14, appearance: 'none', WebkitAppearance: 'none' };
-
   const ABAS = [
     { key: 'checkins', label: 'Check-ins', icon: '✅' },
     { key: 'fotos',    label: 'Fotos',     icon: '📷' },
@@ -164,7 +195,13 @@ export default function Relatorios() {
         }}>←</button>
         <div>
           <div style={{ fontFamily: T.fontTitle, fontSize: 24, fontWeight: 800, lineHeight: 1 }}>RELATÓRIOS</div>
-          <div style={{ color: T.muted, fontSize: 13, marginTop: 2 }}>Visão geral do dia</div>
+          <div style={{ color: T.muted, fontSize: 13, marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+            Visão geral do dia
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#4ade80', fontWeight: 700 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', display: 'inline-block', animation: 'pulsar 1.8s ease-in-out infinite' }} />
+              AO VIVO
+            </span>
+          </div>
         </div>
       </div>
 
@@ -188,14 +225,12 @@ export default function Relatorios() {
 
       <div style={{ padding: '16px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-        {/* Filtro data (sempre visível) */}
         <input type="date" value={data} onChange={e => setData(e.target.value)}
           style={{ ...selectStyle, colorScheme: 'dark' }} />
 
-        {/* ── ABA CHECK-INS ── */}
+        {/* ── CHECK-INS ── */}
         {aba === 'checkins' && (
           <>
-            {/* Filtros */}
             <div style={{ ...S.card, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
               <select value={filtroPromotor} onChange={e => setFiltroPromotor(e.target.value)} style={selectStyle}>
                 <option value="">Todos os promotores</option>
@@ -207,7 +242,6 @@ export default function Relatorios() {
               </select>
             </div>
 
-            {/* Cards resumo */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
                 { label: 'Check-ins',  valor: totalCheckins,    cor: T.green,   icon: '✅' },
@@ -223,10 +257,9 @@ export default function Relatorios() {
               ))}
             </div>
 
-            {/* Lista */}
             {carregando ? (
               <div style={{ textAlign: 'center', color: T.muted, padding: 40 }}>Carregando...</div>
-            ) : checkins.length === 0 ? (
+            ) : checkinsFiltrados.length === 0 ? (
               <div style={{ ...S.card, padding: 32, textAlign: 'center' }}>
                 <div style={{ fontSize: 36, marginBottom: 8 }}>📋</div>
                 <div style={{ color: T.muted, fontSize: 14 }}>Nenhum checkin encontrado.</div>
@@ -287,7 +320,7 @@ export default function Relatorios() {
           </>
         )}
 
-        {/* ── ABA FOTOS ── */}
+        {/* ── FOTOS ── */}
         {aba === 'fotos' && (
           <>
             <div style={{ ...S.card, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -303,12 +336,12 @@ export default function Relatorios() {
 
             <div style={{ ...S.card, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 13, color: T.muted }}>Total de fotos</span>
-              <span style={{ fontFamily: T.fontTitle, fontSize: 24, color: '#60a5fa', fontWeight: 800 }}>{fotosPDV.length}</span>
+              <span style={{ fontFamily: T.fontTitle, fontSize: 24, color: '#60a5fa', fontWeight: 800 }}>{fotosFiltradas.length}</span>
             </div>
 
             {carregandoFotos ? (
               <div style={{ textAlign: 'center', color: T.muted, padding: 40 }}>Carregando fotos...</div>
-            ) : fotosPDV.length === 0 ? (
+            ) : fotosFiltradas.length === 0 ? (
               <div style={{ ...S.card, padding: 32, textAlign: 'center' }}>
                 <div style={{ fontSize: 36, marginBottom: 8 }}>📷</div>
                 <div style={{ color: T.muted, fontSize: 14 }}>Nenhuma foto registrada neste dia.</div>
@@ -354,7 +387,7 @@ export default function Relatorios() {
           </>
         )}
 
-        {/* ── ABA RUPTURAS ── */}
+        {/* ── RUPTURAS ── */}
         {aba === 'rupturas' && (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -396,7 +429,6 @@ export default function Relatorios() {
                         borderRadius: T.pill, padding: '4px 12px',
                       }}>{emFalta.length}/{r.itens?.length || 0}</span>
                     </div>
-
                     {emFalta.length > 0 && (
                       <>
                         <p style={{ margin: '0 0 8px', fontSize: 11, color: T.red, fontWeight: 700, letterSpacing: 1 }}>EM FALTA</p>
@@ -411,7 +443,6 @@ export default function Relatorios() {
                         </div>
                       </>
                     )}
-
                     {ok.length > 0 && (
                       <>
                         <p style={{ margin: '0 0 8px', fontSize: 11, color: T.green, fontWeight: 700, letterSpacing: 1 }}>DISPONÍVEIS</p>
@@ -451,6 +482,10 @@ export default function Relatorios() {
           }}>✕</div>
         </div>
       )}
+
+      <style>{`
+        @keyframes pulsar { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+      `}</style>
     </div>
   );
 }
