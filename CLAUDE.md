@@ -64,48 +64,25 @@
              Promotores, Lojas, Clientes, Configuracoes,
              Relatorios, Mapa)
 [x] Item 5 — aviso ao promotor sem rota escalada hoje
-             (banner amarelo na aba Início + botão check-in desabilitado
-              + tela vazia na aba Rota — JÁ ESTAVA IMPLEMENTADO)
 [x] Item 6 — hora correta no relatório
-             (serverTimestamp() no checkin + formatarHora() no relatório
-              — JÁ ESTAVA IMPLEMENTADO)
 [x] Item 7 — relatório com dados reais
-             (onSnapshot em checkins/fotos_pdv/rupturas, filtros por data,
-              promotor e loja — JÁ ESTAVA IMPLEMENTADO)
 [x] Item 8 — relatório por promotor: tempo em loja, entrada/saída
-             (tempoVisita no checkout, formatarTempo() no relatório
-              — JÁ ESTAVA IMPLEMENTADO)
 [x] Item 9 — Firebase Storage Rules restritivas
-             (arquivo storage.rules criado — promotor só escreve
-              em checkins/{uid}/ e fotos_pdv/{uid}/)
              AÇÃO MANUAL: publicar via Firebase Console ou CLI:
              firebase deploy --only storage
 [x] Item 10 — retry automático + fila offline no upload
-              (uploadComRetry com 3 tentativas + localStorage queue
-               — JÁ ESTAVA IMPLEMENTADO)
 [x] Item 11 — foto da FACHADA obrigatória no check-in
-              (promotor NÃO avança sem foto — etapa 'foto' bloqueia
-               — JÁ ESTAVA IMPLEMENTADO)
 [x] Item 14 — Ruptura de SKU implementada
-              (sheet Ruptura, toggle por SKU, salva em Firestore
-               — JÁ ESTAVA IMPLEMENTADO)
 [x] Item 19 — Modo offline + sincronização automática
-              (fila localStorage + reenvio automático ao reconectar
-               — JÁ ESTAVA IMPLEMENTADO)
 [x] Item 20 — Abrir Maps direto na loja
-              (botão 🗺️ Rota na aba Rota do promotor abre
-               maps.google.com/?q=lat,lng — JÁ ESTAVA IMPLEMENTADO)
 [x] Item 21 — Mapa tempo real com pins por promotor
-              (gestor/Mapa.jsx com Leaflet + onSnapshot em checkins de hoje
-               + lista de promotores ativos — JÁ ESTAVA IMPLEMENTADO)
 [x] Item 22 — Status visual por promotor no gestor/Dashboard
-              (seção "PROMOTORES HOJE" com bolinha colorida em tempo real:
-               verde=ativo, amarelo=parado, cinza=encerrou, vermelho=sem sinal
-               + link para Mapa ao Vivo — IMPLEMENTADO 31/05)
 [x] Item 25 — Confirmação de rota pelo promotor
-              (botão "✓ Confirmar rota" na aba Rota do promotor;
-               salva rotaConfirmada+rotaConfirmadaEm no Firestore escalas;
-               badge "✓ confirmada" visível no gestor/Escala — IMPLEMENTADO 31/05)
+[x] BUG CRÍTICO — Configurações trava com tela azul
+              (React.useState inválido → substituído por useState
+               importado corretamente — CORRIGIDO 31/05)
+[x] Layout padronizado — botão ☰ menu lateral em todas as telas
+              do gestor (Configurações reescrita com header padrão)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔴 PENDÊNCIA MANUAL — AÇÃO DO USUÁRIO NECESSÁRIA
@@ -173,25 +150,22 @@
 Data: 31/05/2026
 
 O que foi feito:
-  - Auditoria do código vs CLAUDE.md — itens 20 e 21 já estavam
-    implementados (Maps button no promotor + Mapa.jsx com Leaflet)
-  - Item 22 — Status visual em tempo real no gestor/Dashboard:
-    seção "PROMOTORES HOJE" com bolinhas coloridas (verde/amarelo/
-    cinza/vermelho) baseada em onSnapshot dos checkins de hoje.
-    Lógica: ativo (<60min desde checkin), parado (>60min), finalizado
-    (checkout registrado), sem sinal (sem checkin hoje).
-    Botão "Ver no Mapa ao Vivo" redireciona para gestor/Mapa.
-  - Item 25 — Confirmação de rota pelo promotor:
-    Botão "✓ Confirmar rota" na aba Rota do promotor/Dashboard.
-    Salva rotaConfirmada=true + rotaConfirmadaEm + rotaConfirmadaNome
-    no documento da escala no Firestore. Badge "✓ confirmada" (verde)
-    aparece no card da escala em gestor/Escala.jsx em tempo real
-    (já usa onSnapshot).
+  - BUG CRÍTICO CORRIGIDO — gestor/Configuracoes.jsx trava/tela azul:
+    causa raiz: linha `const [menuAberto, setMenuAberto] = React.useState(false)`
+    React não estava importado como namespace, causando erro em runtime.
+    Solução: reescrito com useState importado normalmente + layout
+    completamente padronizado com o padrão de todas as outras telas
+    do gestor (header com título + botão ☰ → SidebarGestor).
+  - Layout padronizado em Configurações:
+    • Header "Conta / Configurações" com botão ☰ (igual Promotores, etc.)
+    • Cards com S.card + T.r16 (tokens do design system)
+    • Perfil com avatar gradiente igual ao SidebarGestor
+    • Badge "🔑 GESTOR" igual ao sidebar
+    • Modal de saída com animação bottom sheet
 
 Arquivos alterados:
-  - src/pages/gestor/Dashboard.jsx (reescrito com status em tempo real)
-  - src/pages/promotor/Dashboard.jsx (estado + função + UI confirmação)
-  - src/pages/gestor/Escala.jsx (badge "✓ confirmada" no card)
+  - src/pages/gestor/Configuracoes.jsx (reescrito completamente)
+  - CLAUDE.md (este arquivo)
 
 Pendências manuais (ação do usuário):
   - BUG 5: vincular lojaId nos promotores (Firebase Console)
