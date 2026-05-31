@@ -3,6 +3,8 @@ import { db } from '../../firebase/config';
 import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
 import { T, S } from '../../theme/tokens';
 import { useBackButton } from '../../hooks/useBackButton';
+import GeometricBackground from '../../components/GeometricBackground';
+import SidebarGestor from '../../components/SidebarGestor';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -57,6 +59,7 @@ function pinLaranja(nome) {
 
 export default function Mapa() {
   useBackButton();
+  const [menuAberto, setMenuAberto] = useState(false);
   const mapRef      = useRef(null);
   const mapaInst    = useRef(null);
   const marcadores  = useRef({});
@@ -179,18 +182,13 @@ export default function Mapa() {
 
   return (
     <div style={{
-      background: `radial-gradient(ellipse at 30% 0%, #0a3572 0%, #032774 50%, #010e2e 100%)`,
       minHeight: '100dvh', fontFamily: T.fontBody, color: T.text,
       maxWidth: 480, margin: '0 auto',
       display: 'flex', flexDirection: 'column',
+      position: 'relative',
     }}>
-
-      {/* Orb */}
-      <div style={{
-        position: 'fixed', width: 220, height: 220, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(224,104,32,0.10) 0%, transparent 70%)',
-        top: -40, right: -40, pointerEvents: 'none', zIndex: 0,
-      }} />
+      <GeometricBackground />
+      <SidebarGestor aberto={menuAberto} onFechar={() => setMenuAberto(false)} />
 
       {/* ── HEADER ── */}
       <div style={{
@@ -205,20 +203,25 @@ export default function Mapa() {
               🗺️ Mapa ao Vivo
             </h1>
           </div>
-          <div style={{
-            ...S.card, padding: '8px 16px', borderRadius: T.pill,
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
-            <span style={{
-              width: 8, height: 8, borderRadius: '50%',
-              background: ativos.length > 0 ? T.green : T.muted,
-              boxShadow: ativos.length > 0 ? `0 0 8px ${T.green}` : 'none',
-              display: 'inline-block',
-            }} />
-            <span style={{ fontFamily: T.fontTitle, fontSize: 20, fontWeight: 700, color: T.orange }}>
-              {ativos.length}
-            </span>
-            <span style={{ fontSize: 11, color: T.muted }}>ativo{ativos.length !== 1 ? 's' : ''}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              ...S.card, padding: '8px 16px', borderRadius: T.pill,
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              <span style={{
+                width: 8, height: 8, borderRadius: '50%',
+                background: ativos.length > 0 ? T.green : T.muted,
+                boxShadow: ativos.length > 0 ? `0 0 8px ${T.green}` : 'none',
+                display: 'inline-block',
+              }} />
+              <span style={{ fontFamily: T.fontTitle, fontSize: 20, fontWeight: 700, color: T.orange }}>
+                {ativos.length}
+              </span>
+              <span style={{ fontSize: 11, color: T.muted }}>ativo{ativos.length !== 1 ? 's' : ''}</span>
+            </div>
+            <button onClick={() => setMenuAberto(true)} style={{
+              ...S.card, border: 'none', padding: '10px 14px', cursor: 'pointer', fontSize: 22,
+            }}>☰</button>
           </div>
         </div>
       </div>

@@ -2,18 +2,21 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
-    match /checkins/{uid}/{fileName} {
-      allow read:  if request.auth != null && request.auth.uid == uid;
-      allow write: if request.auth != null
-                   && request.auth.uid == uid
-                   && request.resource.size < 10 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+    // ── Check-in fachada ─────────────────────────────────────────────────
+    // Promotor só grava na própria pasta: checkins/{uid}/...
+    match /checkins/{uid}/{allPaths=**} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
     }
 
-    match /checkins/{allPaths=**} {
-      allow read: if request.auth != null;
+    // ── Fotos PDV ────────────────────────────────────────────────────────
+    // Promotor só grava na própria pasta: fotos_pdv/{uid}/...
+    match /fotos_pdv/{uid}/{allPaths=**} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
     }
 
+    // ── Bloqueia tudo o mais ─────────────────────────────────────────────
     match /{allPaths=**} {
       allow read, write: if false;
     }

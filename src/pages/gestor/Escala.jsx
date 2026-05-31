@@ -7,11 +7,14 @@ import {
 import { db } from '../../firebase/config';
 import { T, S } from '../../theme/tokens';
 import { useBackButton } from '../../hooks/useBackButton';  // ← NOVO
+import GeometricBackground from '../../components/GeometricBackground';
+import SidebarGestor from '../../components/SidebarGestor';
 
 const hoje = () => new Date().toISOString().split('T')[0];
 
 const formatData = (d) => {
   if (!d) return '';
+  const [menuAberto, setMenuAberto] = useState(false);
   const [y, m, dia] = d.split('-');
   return `${dia}/${m}/${y}`;
 };
@@ -19,18 +22,29 @@ const formatData = (d) => {
 export default function Escala() {
   const navigate = useNavigate();
 
+  const [menuAberto, setMenuAberto] = useState(false);
   const [promotores, setPromotores] = useState([]);
+  const [menuAberto, setMenuAberto] = useState(false);
   const [lojas, setLojas]           = useState([]);
+  const [menuAberto, setMenuAberto] = useState(false);
   const [escalas, setEscalas]       = useState([]);
+  const [menuAberto, setMenuAberto] = useState(false);
   const [carregando, setCarregando] = useState(true);
 
+  const [menuAberto, setMenuAberto] = useState(false);
   const [data, setData]             = useState(hoje());
+  const [menuAberto, setMenuAberto] = useState(false);
   const [promotorId, setPromotorId] = useState('');
+  const [menuAberto, setMenuAberto] = useState(false);
   const [lojasSel, setLojasSel]     = useState([]);
+  const [menuAberto, setMenuAberto] = useState(false);
   const [editId, setEditId]         = useState(null);
 
+  const [menuAberto, setMenuAberto] = useState(false);
   const [sheet, setSheet]     = useState(null);
+  const [menuAberto, setMenuAberto] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [menuAberto, setMenuAberto] = useState(false);
   const [toast, setToast]     = useState('');
 
   // ✅ Botão voltar Android — fecha sheet antes de sair da tela
@@ -155,10 +169,12 @@ export default function Escala() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: `radial-gradient(ellipse at 30% 0%, #0a3572 0%, ${T.bg} 50%, #010e2e 100%)`,
       fontFamily: T.fontBody, color: T.text,
       paddingBottom: 100, maxWidth: 480, margin: '0 auto',
+      position: 'relative',
     }}>
+      <GeometricBackground />
+      <SidebarGestor aberto={menuAberto} onFechar={() => setMenuAberto(false)} />
 
       {/* HEADER */}
       <div style={{
@@ -166,28 +182,34 @@ export default function Escala() {
         borderRadius: '0 0 24px 24px', borderTop: 'none',
         padding: '52px 20px 20px',
         display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8,
+        justifyContent: 'space-between',
       }}>
-        <button onClick={() => navigate('/gestor')} style={{
-          ...S.btnGhost, width: 40, height: 40, borderRadius: T.r12,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 22, padding: 0, flexShrink: 0,
-        }}>‹</button>
-        <div>
-          <div style={{ fontFamily: T.fontTitle, fontSize: 26, fontWeight: 900 }}>Escala</div>
-          <div style={{ fontSize: 12, color: T.muted, marginTop: 1 }}>
-            Atribuição de lojas por dia
-            <span style={{
-              marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 4,
-              fontSize: 10, color: '#4ade80', fontWeight: 700,
-            }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <button onClick={() => navigate('/gestor')} style={{
+            ...S.btnGhost, width: 40, height: 40, borderRadius: T.r12,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 22, padding: 0, flexShrink: 0,
+          }}>‹</button>
+          <div>
+            <div style={{ fontFamily: T.fontTitle, fontSize: 26, fontWeight: 900 }}>Escala</div>
+            <div style={{ fontSize: 12, color: T.muted, marginTop: 1 }}>
+              Atribuição de lojas por dia
               <span style={{
-                width: 6, height: 6, borderRadius: '50%', background: '#4ade80',
-                display: 'inline-block', animation: 'pulsar 1.8s ease-in-out infinite',
-              }} />
-              AO VIVO
-            </span>
+                marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 4,
+                fontSize: 10, color: '#4ade80', fontWeight: 700,
+              }}>
+                <span style={{
+                  width: 6, height: 6, borderRadius: '50%', background: '#4ade80',
+                  display: 'inline-block', animation: 'pulsar 1.8s ease-in-out infinite',
+                }} />
+                AO VIVO
+              </span>
+            </div>
           </div>
         </div>
+        <button onClick={() => setMenuAberto(true)} style={{
+          ...S.card, border: 'none', padding: '10px 14px', cursor: 'pointer', fontSize: 22,
+        }}>☰</button>
       </div>
 
       {/* FORMULÁRIO */}
@@ -317,13 +339,23 @@ export default function Escala() {
                       {(esc.lojas || []).length > 2 ? ` +${esc.lojas.length - 2}` : ''}
                     </div>
                   </div>
-                  <div style={{
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <div style={{
                     background: 'rgba(224,104,32,0.15)',
                     border: `1px solid ${T.orange}`,
                     borderRadius: T.pill, padding: '4px 12px',
                     fontSize: 12, fontWeight: 700, color: T.orange,
                   }}>
                     {(esc.lojas || []).length} loja{(esc.lojas || []).length !== 1 ? 's' : ''}
+                  </div>
+                    {esc.rotaConfirmada && (
+                      <div style={{
+                        background: 'rgba(76,175,80,0.15)',
+                        border: `1px solid ${T.green}`,
+                        borderRadius: T.pill, padding: '4px 10px',
+                        fontSize: 11, fontWeight: 700, color: T.green,
+                      }}>✓ confirmada</div>
+                    )}
                   </div>
                 </div>
               ))}

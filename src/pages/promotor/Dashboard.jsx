@@ -117,6 +117,9 @@ export default function PromotorDashboard() {
 
   const [lojas, setLojas]                   = useState([]);
   const [carregandoRota, setCarregandoRota] = useState(true);
+  const [escalaId, setEscalaId]             = useState(null);
+  const [rotaConfirmada, setRotaConfirmada] = useState(false);
+  const [confirmandoRota, setConfirmandoRota] = useState(false);
   const [lojaDetalhe, setLojaDetalhe]       = useState(null);
   const [sheetLoja, setSheetLoja]           = useState(false);
   const [clientesLoja, setClientesLoja]     = useState([]);
@@ -210,7 +213,11 @@ export default function PromotorDashboard() {
         );
         const escalaSnap = await getDocs(escalaQ);
         let lojasIds = [];
-        escalaSnap.forEach(d => { if (d.data().lojas) lojasIds = [...lojasIds, ...d.data().lojas]; });
+        escalaSnap.forEach(d => {
+          if (d.data().lojas) lojasIds = [...lojasIds, ...d.data().lojas];
+          setEscalaId(d.id);
+          setRotaConfirmada(d.data().rotaConfirmada === true);
+        });
         const lojasData = [];
         for (const id of lojasIds) {
           const lojaDoc = await getDoc(doc(db, 'lojas', id));
@@ -307,6 +314,20 @@ export default function PromotorDashboard() {
     setTipoFotoAtual(null);
     setSheetFoto(false);
     e.target.value = '';
+  }
+
+  async function confirmarRota() {
+    if (!escalaId || rotaConfirmada) return;
+    setConfirmandoRota(true);
+    try {
+      await updateDoc(doc(db, 'escalas', escalaId), {
+        rotaConfirmada: true,
+        rotaConfirmadaEm: serverTimestamp(),
+        rotaConfirmadaNome: nome,
+      });
+      setRotaConfirmada(true);
+    } catch (e) { console.error(e); }
+    setConfirmandoRota(false);
   }
 
   function abrirSheetFoto(loja) {
@@ -751,7 +772,25 @@ export default function PromotorDashboard() {
         {/* ── ABA ROTA ── */}
         {aba === 'rota' && (
           <div style={{ animation: 'fadeInUp 0.4s cubic-bezier(0.34,1.56,0.64,1)' }}>
-            <p style={{ fontFamily: T.fontTitle, fontSize: 22, margin: '0 0 16px' }}>ROTA DO DIA</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <p style={{ fontFamily: T.fontTitle, fontSize: 22, margin: 0 }}>ROTA DO DIA</p>
+              {lojas.length > 0 && (
+                <button
+                  onClick={confirmarRota}
+                  disabled={rotaConfirmada || confirmandoRota}
+                  style={{
+                    ...S.btnGhost, padding: '8px 14px', fontSize: 12,
+                    borderRadius: T.pill, display: 'flex', alignItems: 'center', gap: 6,
+                    color: rotaConfirmada ? T.green : T.orange,
+                    borderColor: rotaConfirmada ? `${T.green}55` : 'rgba(224,104,32,0.4)',
+                    background: rotaConfirmada ? 'rgba(76,175,80,0.1)' : undefined,
+                    opacity: confirmandoRota ? 0.6 : 1,
+                    cursor: rotaConfirmada ? 'default' : 'pointer',
+                  }}>
+                  {rotaConfirmada ? '✅ Confirmada' : confirmandoRota ? '⏳...' : '✓ Confirmar rota'}
+                </button>
+              )}
+            </div>
             {carregandoRota && <div style={{ textAlign: 'center', padding: 40, color: T.muted }}>Carregando rota...</div>}
             {!carregandoRota && lojas.length === 0 && (
               <div style={{ ...S.card, textAlign: 'center', padding: 40 }}>
@@ -804,6 +843,15 @@ export default function PromotorDashboard() {
                     ...S.btnGhost, flex: 1, padding: '8px 0', fontSize: 12,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                   }}>📦 Mix</button>
+                  {loja.lat != null && loja.lng != null && (
+                    <button
+                      onClick={() => window.open(`https://maps.google.com/?q=${loja.lat},${loja.lng}`, '_blank')}
+                      style={{
+                        ...S.btnGhost, flex: 1, padding: '8px 0', fontSize: 12,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                        color: '#60a5fa', borderColor: 'rgba(96,165,250,0.3)',
+                      }}>🗺️ Rota</button>
+                  )}
                 </div>
               </div>
             ))}

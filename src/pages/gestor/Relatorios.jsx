@@ -6,7 +6,8 @@ import {
 import { db } from '../../firebase/config';
 import { T, S } from '../../theme/tokens';
 import { useBackButton } from '../../hooks/useBackButton';
-
+import GeometricBackground from '../../components/GeometricBackground';
+import SidebarGestor from '../../components/SidebarGestor';
 const TIPOS_FOTO = [
   { id: 'gondola_antes',  label: 'Gôndola Antes',  icon: '📦' },
   { id: 'gondola_depois', label: 'Gôndola Depois',  icon: '✨' },
@@ -22,6 +23,7 @@ const TIPOS_FOTO = [
 
 export default function Relatorios() {
   useBackButton();
+  const [menuAberto, setMenuAberto] = useState(false);
   const navigate  = useNavigate();
   const hoje      = new Date().toISOString().split('T')[0];
 
@@ -180,22 +182,25 @@ export default function Relatorios() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: `radial-gradient(ellipse at 20% 10%, #0a3572 0%, ${T.bg} 50%, ${T.card} 100%)`,
       fontFamily: T.fontBody, color: T.text,
       maxWidth: 480, margin: '0 auto', paddingBottom: 40,
+      position: 'relative',
     }}>
+      <GeometricBackground />
+      <SidebarGestor aberto={menuAberto} onFechar={() => setMenuAberto(false)} />
 
       {/* Header */}
       <div style={{
         ...S.cardDark, borderRadius: 0, borderBottom: `1px solid ${T.border}`,
         padding: '52px 20px 16px', display: 'flex', alignItems: 'center', gap: 12,
+        position: 'relative', zIndex: 1,
       }}>
         <button onClick={() => navigate('/gestor')} style={{
           background: 'rgba(255,255,255,0.08)', border: `1px solid ${T.glassBorder}`,
           borderRadius: T.r12, color: T.text, width: 38, height: 38, fontSize: 18,
           cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>←</button>
-        <div>
+        <div style={{ flex: 1 }}>
           <div style={{ fontFamily: T.fontTitle, fontSize: 24, fontWeight: 800, lineHeight: 1 }}>RELATÓRIOS</div>
           <div style={{ color: T.muted, fontSize: 13, marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
             Visão geral do dia
@@ -205,6 +210,9 @@ export default function Relatorios() {
             </span>
           </div>
         </div>
+        <button onClick={() => setMenuAberto(true)} style={{
+          ...S.card, border: 'none', padding: '10px 14px', cursor: 'pointer', fontSize: 22, flexShrink: 0,
+        }}>☰</button>
       </div>
 
       {/* Abas */}

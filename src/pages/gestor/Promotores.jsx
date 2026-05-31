@@ -6,6 +6,8 @@ import {
 } from "firebase/firestore";
 import { T, S } from "../../theme/tokens";
 import { useBackButton } from "../../hooks/useBackButton";
+import GeometricBackground from "../../components/GeometricBackground";
+import SidebarGestor from "../../components/SidebarGestor";
 
 export default function Promotores() {
   useBackButton();
@@ -18,6 +20,7 @@ export default function Promotores() {
   const [deletando, setDeletando] = useState(null);
   const [busca, setBusca] = useState("");
   const [abaFiltro, setAbaFiltro] = useState("todos");
+  const [menuAberto, setMenuAberto] = useState(false);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "usuarios"), (snap) => {
@@ -89,212 +92,224 @@ export default function Promotores() {
 
   return (
     <div style={{
-      background: `radial-gradient(ellipse at 30% 0%, #0a3572 0%, #032774 50%, #010e2e 100%)`,
       minHeight: "100dvh", fontFamily: T.fontBody, color: T.text,
       maxWidth: 480, margin: "0 auto", padding: "52px 16px 100px",
       position: "relative",
     }}>
+      <GeometricBackground />
 
-      <div style={{
-        position: "fixed", width: 250, height: 250, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(224,104,32,0.10) 0%, transparent 70%)",
-        top: -50, right: -50, pointerEvents: "none", zIndex: 0,
-      }} />
+      {/* Sidebar */}
+      <SidebarGestor aberto={menuAberto} onFechar={() => setMenuAberto(false)} />
 
       {/* HEADER */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, position: "relative", zIndex: 1 }}>
         <div>
           <p style={{ margin: 0, fontSize: 12, color: T.muted }}>Gerenciar</p>
           <h1 style={{ margin: 0, fontFamily: T.fontTitle, fontSize: 30, fontWeight: 900, letterSpacing: -0.5 }}>
             Promotores
           </h1>
         </div>
-        <div style={{
-          ...S.card, padding: "8px 16px", borderRadius: T.pill,
-          fontFamily: T.fontTitle, fontSize: 20, fontWeight: 700, color: T.orange,
-        }}>
-          {promotores.length}
-        </div>
-      </div>
-
-      {/* ALERTA — promotores sem loja */}
-      {semLoja.length > 0 && (
-        <div style={{
-          ...S.card,
-          border: `1px solid rgba(249,168,37,0.45)`,
-          background: "rgba(249,168,37,0.08)",
-          borderRadius: T.r16,
-          padding: "14px 16px",
-          marginBottom: 16,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-            <span style={{ fontSize: 20 }}>⚠️</span>
-            <div>
-              <p style={{ margin: 0, fontFamily: T.fontTitle, fontSize: 16, fontWeight: 700, color: T.yellow }}>
-                {semLoja.length} promotor{semLoja.length > 1 ? "es" : ""} sem loja vinculada
-              </p>
-              <p style={{ margin: 0, fontSize: 12, color: T.muted }}>
-                O GPS não será validado — vincule uma loja agora
-              </p>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {semLoja.map((p) => (
-              <div key={p.id} style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-                background: "rgba(255,255,255,0.05)", borderRadius: T.r12, padding: "10px 14px",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{
-                    width: 34, height: 34, borderRadius: "50%",
-                    background: "rgba(249,168,37,0.25)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontFamily: T.fontTitle, fontSize: 16, fontWeight: 700,
-                    color: T.yellow, flexShrink: 0,
-                  }}>
-                    {(p.nome || p.email || "?")[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <p style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>
-                      {p.nome || "Sem nome"}
-                    </p>
-                    <p style={{ margin: 0, fontSize: 11, color: T.muted }}>{p.email}</p>
-                  </div>
-                </div>
-                <button onClick={() => abrirAtribuir(p)} style={{
-                  ...S.btnOrange,
-                  padding: "8px 14px", fontSize: 13, borderRadius: T.r12,
-                  boxShadow: "none",
-                }}>
-                  Vincular
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* BUSCA */}
-      <input
-        placeholder="🔍 Buscar por nome ou e-mail..."
-        value={busca}
-        onChange={(e) => setBusca(e.target.value)}
-        style={{ ...S.input, marginBottom: 12 }}
-      />
-
-      {/* ABAS FILTRO */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        {[
-          { key: "todos",   label: `Todos (${promotores.length})` },
-          { key: "semLoja", label: `⚠️ Sem loja (${semLoja.length})` },
-        ].map((f) => (
-          <button key={f.key} onClick={() => setAbaFiltro(f.key)} style={{
-            ...S.btnGhost,
-            flex: 1, padding: "10px 8px", fontSize: 13,
-            borderColor: abaFiltro === f.key ? T.orange : undefined,
-            color: abaFiltro === f.key ? T.orange : T.muted,
-            fontWeight: abaFiltro === f.key ? 700 : 400,
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{
+            ...S.card, padding: "8px 16px", borderRadius: T.pill,
+            fontFamily: T.fontTitle, fontSize: 20, fontWeight: 700, color: T.orange,
           }}>
-            {f.label}
+            {promotores.length}
+          </div>
+          <button
+            onClick={() => setMenuAberto(true)}
+            style={{
+              ...S.card, border: "none", padding: "10px 14px",
+              cursor: "pointer", fontSize: 22,
+            }}
+          >
+            ☰
           </button>
-        ))}
+        </div>
       </div>
 
-      {/* LISTA */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {filtrados.length === 0 && (
-          <div style={{ ...S.card, padding: 32, textAlign: "center" }}>
-            <p style={{ margin: 0, color: T.muted, fontSize: 14 }}>
-              {abaFiltro === "semLoja"
-                ? "✅ Todos os promotores têm loja vinculada!"
-                : "Nenhum promotor cadastrado."}
-            </p>
-            {abaFiltro === "todos" && (
-              <p style={{ margin: "8px 0 0", color: T.muted, fontSize: 12 }}>
-                Crie promotores em Configurações → Criar usuário.
-              </p>
-            )}
+      {/* Conteúdo com z-index para ficar acima do fundo */}
+      <div style={{ position: "relative", zIndex: 1 }}>
+
+        {/* ALERTA — promotores sem loja */}
+        {semLoja.length > 0 && (
+          <div style={{
+            ...S.card,
+            border: `1px solid rgba(249,168,37,0.45)`,
+            background: "rgba(249,168,37,0.08)",
+            borderRadius: T.r16,
+            padding: "14px 16px",
+            marginBottom: 16,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <span style={{ fontSize: 20 }}>⚠️</span>
+              <div>
+                <p style={{ margin: 0, fontFamily: T.fontTitle, fontSize: 16, fontWeight: 700, color: T.yellow }}>
+                  {semLoja.length} promotor{semLoja.length > 1 ? "es" : ""} sem loja vinculada
+                </p>
+                <p style={{ margin: 0, fontSize: 12, color: T.muted }}>
+                  O GPS não será validado — vincule uma loja agora
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {semLoja.map((p) => (
+                <div key={p.id} style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  background: "rgba(255,255,255,0.05)", borderRadius: T.r12, padding: "10px 14px",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{
+                      width: 34, height: 34, borderRadius: "50%",
+                      background: "rgba(249,168,37,0.25)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontFamily: T.fontTitle, fontSize: 16, fontWeight: 700,
+                      color: T.yellow, flexShrink: 0,
+                    }}>
+                      {(p.nome || p.email || "?")[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>
+                        {p.nome || "Sem nome"}
+                      </p>
+                      <p style={{ margin: 0, fontSize: 11, color: T.muted }}>{p.email}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => abrirAtribuir(p)} style={{
+                    ...S.btnOrange,
+                    padding: "8px 14px", fontSize: 13, borderRadius: T.r12,
+                    boxShadow: "none",
+                  }}>
+                    Vincular
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {filtrados.map((p) => {
-          const loja = nomeLoja(p.lojaId);
-          const ativo = p.ativo !== false;
-          const semLojaFlag = !p.lojaId;
-          return (
-            <div key={p.id} style={{
-              ...S.card, padding: 16,
-              borderLeft: `3px solid ${semLojaFlag ? T.yellow : ativo ? T.green : T.muted}`,
-              opacity: ativo ? 1 : 0.6,
+        {/* BUSCA */}
+        <input
+          placeholder="🔍 Buscar por nome ou e-mail..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          style={{ ...S.input, marginBottom: 12 }}
+        />
+
+        {/* ABAS FILTRO */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          {[
+            { key: "todos",   label: `Todos (${promotores.length})` },
+            { key: "semLoja", label: `⚠️ Sem loja (${semLoja.length})` },
+          ].map((f) => (
+            <button key={f.key} onClick={() => setAbaFiltro(f.key)} style={{
+              ...S.btnGhost,
+              flex: 1, padding: "10px 8px", fontSize: 13,
+              borderColor: abaFiltro === f.key ? T.orange : undefined,
+              color: abaFiltro === f.key ? T.orange : T.muted,
+              fontWeight: abaFiltro === f.key ? 700 : 400,
             }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{
-                    width: 42, height: 42, borderRadius: "50%",
-                    background: semLojaFlag ? "rgba(249,168,37,0.3)" : T.orange,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontFamily: T.fontTitle, fontSize: 20, fontWeight: 700, flexShrink: 0,
-                    color: semLojaFlag ? T.yellow : "#fff",
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {/* LISTA */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {filtrados.length === 0 && (
+            <div style={{ ...S.card, padding: 32, textAlign: "center" }}>
+              <p style={{ margin: 0, color: T.muted, fontSize: 14 }}>
+                {abaFiltro === "semLoja"
+                  ? "✅ Todos os promotores têm loja vinculada!"
+                  : "Nenhum promotor cadastrado."}
+              </p>
+              {abaFiltro === "todos" && (
+                <p style={{ margin: "8px 0 0", color: T.muted, fontSize: 12 }}>
+                  Crie promotores em Configurações → Criar usuário.
+                </p>
+              )}
+            </div>
+          )}
+
+          {filtrados.map((p) => {
+            const loja = nomeLoja(p.lojaId);
+            const ativo = p.ativo !== false;
+            const semLojaFlag = !p.lojaId;
+            return (
+              <div key={p.id} style={{
+                ...S.card, padding: 16,
+                borderLeft: `3px solid ${semLojaFlag ? T.yellow : ativo ? T.green : T.muted}`,
+                opacity: ativo ? 1 : 0.6,
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{
+                      width: 42, height: 42, borderRadius: "50%",
+                      background: semLojaFlag ? "rgba(249,168,37,0.3)" : T.orange,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontFamily: T.fontTitle, fontSize: 20, fontWeight: 700, flexShrink: 0,
+                      color: semLojaFlag ? T.yellow : "#fff",
+                    }}>
+                      {(p.nome || p.email || "?")[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <p style={{ margin: "0 0 2px", fontFamily: T.fontTitle, fontSize: 17, fontWeight: 700 }}>
+                        {p.nome || "Sem nome"}
+                      </p>
+                      <p style={{ margin: 0, fontSize: 12, color: T.muted }}>{p.email}</p>
+                    </div>
+                  </div>
+
+                  <span style={{
+                    fontSize: 11, padding: "3px 10px", borderRadius: T.pill, flexShrink: 0,
+                    background: semLojaFlag
+                      ? "rgba(249,168,37,0.15)"
+                      : ativo ? "rgba(76,175,80,0.15)" : "rgba(255,255,255,0.06)",
+                    color: semLojaFlag ? T.yellow : ativo ? T.green : T.muted,
                   }}>
-                    {(p.nome || p.email || "?")[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <p style={{ margin: "0 0 2px", fontFamily: T.fontTitle, fontSize: 17, fontWeight: 700 }}>
-                      {p.nome || "Sem nome"}
-                    </p>
-                    <p style={{ margin: 0, fontSize: 12, color: T.muted }}>{p.email}</p>
-                  </div>
+                    {semLojaFlag ? "⚠️ Sem loja" : ativo ? "Ativo" : "Inativo"}
+                  </span>
                 </div>
 
-                <span style={{
-                  fontSize: 11, padding: "3px 10px", borderRadius: T.pill, flexShrink: 0,
-                  background: semLojaFlag
-                    ? "rgba(249,168,37,0.15)"
-                    : ativo ? "rgba(76,175,80,0.15)" : "rgba(255,255,255,0.06)",
-                  color: semLojaFlag ? T.yellow : ativo ? T.green : T.muted,
+                <div style={{
+                  margin: "12px 0 0", padding: "10px 14px",
+                  background: semLojaFlag ? "rgba(249,168,37,0.06)" : "rgba(255,255,255,0.04)",
+                  border: semLojaFlag ? "1px solid rgba(249,168,37,0.2)" : "none",
+                  borderRadius: T.r12,
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
                 }}>
-                  {semLojaFlag ? "⚠️ Sem loja" : ativo ? "Ativo" : "Inativo"}
-                </span>
-              </div>
+                  <span style={{ fontSize: 13, color: loja ? T.text : T.muted }}>
+                    {loja ? `📍 ${loja}` : "Sem loja — GPS ignorado"}
+                  </span>
+                  <button onClick={() => abrirAtribuir(p)} style={{
+                    ...S.btnGhost, padding: "4px 12px", fontSize: 12,
+                    color: semLojaFlag ? T.yellow : T.orange,
+                    border: `1px solid ${semLojaFlag ? "rgba(249,168,37,0.4)" : "rgba(224,104,32,0.3)"}`,
+                  }}>
+                    {loja ? "Trocar" : "Vincular"}
+                  </button>
+                </div>
 
-              <div style={{
-                margin: "12px 0 0", padding: "10px 14px",
-                background: semLojaFlag ? "rgba(249,168,37,0.06)" : "rgba(255,255,255,0.04)",
-                border: semLojaFlag ? "1px solid rgba(249,168,37,0.2)" : "none",
-                borderRadius: T.r12,
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-              }}>
-                <span style={{ fontSize: 13, color: loja ? T.text : T.muted }}>
-                  {loja ? `📍 ${loja}` : "Sem loja — GPS ignorado"}
-                </span>
-                <button onClick={() => abrirAtribuir(p)} style={{
-                  ...S.btnGhost, padding: "4px 12px", fontSize: 12,
-                  color: semLojaFlag ? T.yellow : T.orange,
-                  border: `1px solid ${semLojaFlag ? "rgba(249,168,37,0.4)" : "rgba(224,104,32,0.3)"}`,
-                }}>
-                  {loja ? "Trocar" : "Vincular"}
-                </button>
+                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                  <button onClick={() => toggleAtivo(p)} style={{
+                    ...S.btnGhost, flex: 1, padding: "8px",
+                    fontSize: 12, color: ativo ? T.muted : T.green,
+                  }}>
+                    {ativo ? "⏸ Desativar" : "▶ Ativar"}
+                  </button>
+                  <button onClick={() => deletar(p.id)} style={{
+                    ...S.btnGhost, flex: 1, padding: "8px", fontSize: 12,
+                    color: deletando === p.id ? "#ff6b6b" : T.muted,
+                    border: deletando === p.id ? "1px solid rgba(244,67,54,0.4)" : undefined,
+                  }}>
+                    {deletando === p.id ? "Confirmar exclusão?" : "🗑 Remover"}
+                  </button>
+                </div>
               </div>
-
-              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button onClick={() => toggleAtivo(p)} style={{
-                  ...S.btnGhost, flex: 1, padding: "8px",
-                  fontSize: 12, color: ativo ? T.muted : T.green,
-                }}>
-                  {ativo ? "⏸ Desativar" : "▶ Ativar"}
-                </button>
-                <button onClick={() => deletar(p.id)} style={{
-                  ...S.btnGhost, flex: 1, padding: "8px", fontSize: 12,
-                  color: deletando === p.id ? "#ff6b6b" : T.muted,
-                  border: deletando === p.id ? "1px solid rgba(244,67,54,0.4)" : undefined,
-                }}>
-                  {deletando === p.id ? "Confirmar exclusão?" : "🗑 Remover"}
-                </button>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* BOTTOM SHEET VINCULAR LOJA */}

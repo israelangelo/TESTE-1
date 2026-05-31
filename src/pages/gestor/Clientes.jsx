@@ -10,8 +10,8 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../../context/AuthContext';
 import { T, S } from '../../theme/tokens';
 import { useBackButton } from '../../hooks/useBackButton';
-
-function haversine(lat1, lng1, lat2, lng2) {
+import GeometricBackground from '../../components/GeometricBackground';
+import SidebarGestor from '../../components/SidebarGestor';(lat1, lng1, lat2, lng2) {
   const R = 6371000;
   const toRad = (d) => (d * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
@@ -41,6 +41,7 @@ const TAREFAS_INIT = [
 
 export default function PromotorDashboard() {
   useBackButton();
+  const [menuAberto, setMenuAberto] = useState(false);
   const { currentUser, userData } = useAuth();
   const navigate = useNavigate();
   const inputFotoRef = useRef(null);
@@ -276,19 +277,13 @@ export default function PromotorDashboard() {
 
   return (
     <div style={{
-      background: `radial-gradient(ellipse at 30% 0%, #0a3572 0%, #032774 50%, #010e2e 100%)`,
       minHeight: '100dvh', fontFamily: T.fontBody, color: T.text,
       maxWidth: 480, margin: '0 auto',
       display: 'flex', flexDirection: 'column',
       position: 'relative', overflow: 'hidden',
     }}>
-
-      {/* Orb */}
-      <div style={{
-        position: 'absolute', width: 280, height: 280, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(224,104,32,0.12) 0%, transparent 70%)',
-        top: -60, right: -60, pointerEvents: 'none',
-      }} />
+      <GeometricBackground />
+      <SidebarGestor aberto={menuAberto} onFechar={() => setMenuAberto(false)} />
 
       {/* ── HEADER ── */}
       <div style={{

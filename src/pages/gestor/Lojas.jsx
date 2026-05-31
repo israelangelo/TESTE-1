@@ -5,13 +5,16 @@ import {
   deleteDoc, doc, serverTimestamp,
 } from "firebase/firestore";
 import { T, S } from "../../theme/tokens";
-import { useBackButton } from "../../hooks/useBackButton"; // <-- ADICIONADO AQUI
+import { useBackButton } from "../../hooks/useBackButton";
+import GeometricBackground from "../../components/GeometricBackground";
+import SidebarGestor from "../../components/SidebarGestor"; // <-- ADICIONADO AQUI
 
 const FORM_VAZIO = {
   nome: "", endereco: "", cidade: "", lat: "", lng: "",
 };
 
 export default function Lojas() {
+  const [menuAberto, setMenuAberto] = useState(false);
   const [lojas, setLojas] = useState([]);
   const [sheet, setSheet] = useState(false);
   const [form, setForm] = useState(FORM_VAZIO);
@@ -112,33 +115,32 @@ export default function Lojas() {
 
   return (
     <div style={{
-      background: `radial-gradient(ellipse at 30% 0%, #0a3572 0%, #032774 50%, #010e2e 100%)`,
       minHeight: "100dvh", fontFamily: T.fontBody, color: T.text,
       maxWidth: 480, margin: "0 auto", padding: "52px 16px 100px",
       position: "relative",
     }}>
-
-      {/* Orb */}
-      <div style={{
-        position: "fixed", width: 250, height: 250, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(224,104,32,0.10) 0%, transparent 70%)",
-        top: -50, right: -50, pointerEvents: "none", zIndex: 0,
-      }} />
+      <GeometricBackground />
+      <SidebarGestor aberto={menuAberto} onFechar={() => setMenuAberto(false)} />
 
       {/* ── HEADER ── */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, position: "relative", zIndex: 1 }}>
         <div>
           <p style={{ margin: 0, fontSize: 12, color: T.muted }}>Gerenciar</p>
           <h1 style={{ margin: 0, fontFamily: T.fontTitle, fontSize: 30, fontWeight: 900, letterSpacing: -0.5 }}>
             Lojas
           </h1>
         </div>
-        <button onClick={abrirNova} style={{
-          ...S.btnOrange, padding: "10px 20px", fontSize: 15,
-          borderRadius: T.pill, display: "flex", alignItems: "center", gap: 6,
-        }}>
-          + Nova
-        </button>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={abrirNova} style={{
+            ...S.btnOrange, padding: "10px 20px", fontSize: 15,
+            borderRadius: T.pill, display: "flex", alignItems: "center", gap: 6,
+          }}>
+            + Nova
+          </button>
+          <button onClick={() => setMenuAberto(true)} style={{
+            ...S.card, border: "none", padding: "10px 14px", cursor: "pointer", fontSize: 22,
+          }}>☰</button>
+        </div>
       </div>
 
       {/* ── BUSCA ── */}

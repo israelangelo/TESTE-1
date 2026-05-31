@@ -5,6 +5,8 @@ import { updatePassword, signOut, reauthenticateWithCredential, EmailAuthProvide
 import { db, auth } from "../../firebase/config";
 import { useAuth } from "../../context/AuthContext";
 import { useBackButton } from "../../hooks/useBackButton";
+import GeometricBackground from "../../components/GeometricBackground";
+import SidebarGestor from "../../components/SidebarGestor";
 
 const CORES = {
   bg: "#032774",
@@ -22,6 +24,7 @@ const VERSAO = "1.0.0";
 
 export default function Configuracoes() {
   useBackButton();
+  const [menuAberto, setMenuAberto] = React.useState ? React.useState(false) : useState(false);
   const navigate = useNavigate();
   const { currentUser, userData, refreshUserData } = useAuth();
 
@@ -116,6 +119,8 @@ export default function Configuracoes() {
   const s = estilos();
 
   return (
+    <div style={{ position: "relative", minHeight: "100vh" }}>
+      <GeometricBackground />
     <div style={s.container}>
       {/* HEADER */}
       <div style={s.header}>
@@ -251,6 +256,7 @@ export default function Configuracoes() {
         </div>
       )}
     </div>
+    </div>
   );
 }
 
@@ -260,7 +266,7 @@ function estilos() {
       height: "100vh",
       overflowY: "auto",
       WebkitOverflowScrolling: "touch",
-      background: CORES.bg,
+      background: "transparent",
       color: "#fff",
       fontFamily: "'Barlow', sans-serif",
       maxWidth: 480,

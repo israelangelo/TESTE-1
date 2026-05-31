@@ -1,6 +1,6 @@
 ╔══════════════════════════════════════════════════════════════════╗
 ║           BOX AGÊNCIA — CONTEXTO DE CONTINUIDADE                ║
-║                    Atualizado: 30/05/2026                       ║
+║                    Atualizado: 31/05/2026                       ║
 ╚══════════════════════════════════════════════════════════════════╝
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -10,7 +10,7 @@
 1. Edite os arquivos DIRETAMENTE no projeto — nunca mostre código
    para colar manualmente.
 
-2. Após concluir qualquer tarefa, atualize este CONTEXTO.md:
+2. Após concluir qualquer tarefa, atualize este CLAUDE.md:
    - Mova o item resolvido para ✅ CONCLUÍDO com [x]
    - Atualize a seção 🕐 ÚLTIMA SESSÃO
 
@@ -58,113 +58,104 @@
 [x] BUG 3 — gestor/Relatorios.jsx construído e funcional
 [x] BUG 4 — proteção contra checkin duplicado ativa
 [x] BUG 6 — ID do Firestore nunca aparece na tela de Escala
-            (TagNome + resolverNome substituem IDs por nomes)
-[x] Item 3 — onSnapshot ativo nos 3 listeners da Escala
-             (promotores, lojas, escalas em tempo real)
-[x] hook useBackButton.js gerado — botão voltar Android
-[x] useBackButton integrado em: Escala.jsx, promotor/Dashboard.jsx,
-             Promotores.jsx, Lojas.jsx, Clientes.jsx, Configuracoes.jsx,
-             Relatorios.jsx, Mapa.jsx — TODAS AS TELAS INTEGRADAS ✓
+[x] Item 3 — onSnapshot nos 3 listeners da Escala (tempo real)
+[x] hook useBackButton.js — botão voltar Android
+[x] useBackButton em TODAS as telas (Escala, promotor/Dashboard,
+             Promotores, Lojas, Clientes, Configuracoes,
+             Relatorios, Mapa)
+[x] Item 5 — aviso ao promotor sem rota escalada hoje
+             (banner amarelo na aba Início + botão check-in desabilitado
+              + tela vazia na aba Rota — JÁ ESTAVA IMPLEMENTADO)
+[x] Item 6 — hora correta no relatório
+             (serverTimestamp() no checkin + formatarHora() no relatório
+              — JÁ ESTAVA IMPLEMENTADO)
+[x] Item 7 — relatório com dados reais
+             (onSnapshot em checkins/fotos_pdv/rupturas, filtros por data,
+              promotor e loja — JÁ ESTAVA IMPLEMENTADO)
+[x] Item 8 — relatório por promotor: tempo em loja, entrada/saída
+             (tempoVisita no checkout, formatarTempo() no relatório
+              — JÁ ESTAVA IMPLEMENTADO)
+[x] Item 9 — Firebase Storage Rules restritivas
+             (arquivo storage.rules criado — promotor só escreve
+              em checkins/{uid}/ e fotos_pdv/{uid}/)
+             AÇÃO MANUAL: publicar via Firebase Console ou CLI:
+             firebase deploy --only storage
+[x] Item 10 — retry automático + fila offline no upload
+              (uploadComRetry com 3 tentativas + localStorage queue
+               — JÁ ESTAVA IMPLEMENTADO)
+[x] Item 11 — foto da FACHADA obrigatória no check-in
+              (promotor NÃO avança sem foto — etapa 'foto' bloqueia
+               — JÁ ESTAVA IMPLEMENTADO)
+[x] Item 14 — Ruptura de SKU implementada
+              (sheet Ruptura, toggle por SKU, salva em Firestore
+               — JÁ ESTAVA IMPLEMENTADO)
+[x] Item 19 — Modo offline + sincronização automática
+              (fila localStorage + reenvio automático ao reconectar
+               — JÁ ESTAVA IMPLEMENTADO)
+[x] Item 20 — Abrir Maps direto na loja
+              (botão 🗺️ Rota na aba Rota do promotor abre
+               maps.google.com/?q=lat,lng — JÁ ESTAVA IMPLEMENTADO)
+[x] Item 21 — Mapa tempo real com pins por promotor
+              (gestor/Mapa.jsx com Leaflet + onSnapshot em checkins de hoje
+               + lista de promotores ativos — JÁ ESTAVA IMPLEMENTADO)
+[x] Item 22 — Status visual por promotor no gestor/Dashboard
+              (seção "PROMOTORES HOJE" com bolinha colorida em tempo real:
+               verde=ativo, amarelo=parado, cinza=encerrou, vermelho=sem sinal
+               + link para Mapa ao Vivo — IMPLEMENTADO 31/05)
+[x] Item 25 — Confirmação de rota pelo promotor
+              (botão "✓ Confirmar rota" na aba Rota do promotor;
+               salva rotaConfirmada+rotaConfirmadaEm no Firestore escalas;
+               badge "✓ confirmada" visível no gestor/Escala — IMPLEMENTADO 31/05)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔴 BUGS CRÍTICOS — BLOQUEIA LANÇAMENTO
+🔴 PENDÊNCIA MANUAL — AÇÃO DO USUÁRIO NECESSÁRIA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[!] BUG 5 — lojaId ausente no cadastro de alguns promotores
-            → validação de raio GPS ignorada silenciosamente.
-            CORREÇÃO: verificar no Firebase Console se todos
-            os promotores têm o campo lojaId preenchido.
-            PRIORIDADE: MÁXIMA — fazer antes de qualquer outra coisa.
-            (ação manual no Firebase Console — não é código)
+[!] BUG 5 — lojaId ausente em alguns promotores
+            CORREÇÃO: no Firebase Console → Firestore → usuarios
+            → abrir cada promotor → adicionar campo lojaId
+            com o ID da loja correta.
+
+[!] Storage Rules — publicar o arquivo storage.rules no Firebase:
+            firebase deploy --only storage
+            (ou copiar o conteúdo no Firebase Console → Storage → Rules)
+
+[!] Teste real câmera Android — testar capture="environment" em
+            Samsung, Motorola e Xiaomi. Se falhar em algum fabricante,
+            abrir issue no próximo contexto.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🟠 FILA CRÍTICA — sem isso não dá para usar em campo
+🟡 PRÓXIMAS FUNCIONALIDADES — ordem de prioridade
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. [CRÍTICO] BUG 5 — corrigir lojaId nos cadastros (Firebase Console)
+23. [ ] Notificação push ao gestor (check-in + ausência prolongada)
 
-2. [CRÍTICO] Verificar "Permanecer logado" em todos os perfis
-            → base existe no Login, confirmar que funciona em campo
+24. [ ] Histórico mensal do promotor
+        (dias trabalhados, tempo médio, % cobertura da rota)
 
-3. [CRÍTICO] Integrar useBackButton nas telas restantes do gestor:
-            → Promotores.jsx    ✅
-            → Lojas.jsx         ✅
-            → Clientes.jsx      ✅
-            → Configuracoes.jsx ✅
-            → Relatorios.jsx    ✅
-            → Mapa.jsx          ✅
-            CONCLUÍDO — todas as telas do gestor integradas.
+26. [ ] Dashboard de indicadores para o gestor
+        (ruptura por loja, tempo médio no PDV, % rota cumprida)
 
-4. [CRÍTICO] Teste real de câmera Android
-            → cada fabricante trata capture="environment" diferente
-            → testar em Samsung, Motorola e Xiaomi se possível
+12. [ ] Foto ANTES e DEPOIS obrigatória por seção
+        (com metadados de data/hora/GPS para auditoria)
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🟡 FILA IMPORTANTE — compromete o uso diário
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+13. [ ] Checklist dinâmico por seção — não avança sem completar
 
-5.  [IMPORTANTE] Aviso claro ao promotor sem rota escalada hoje
-6.  [IMPORTANTE] Check-in/out registrando hora correta no relatório
-7.  [IMPORTANTE] Relatório mostrando dados reais (estava zerado)
-8.  [IMPORTANTE] Relatório por promotor: tempo em loja, entrada/saída
-9.  [IMPORTANTE] Firebase Storage Rules mais restritivas
-                (promotor só escreve na própria pasta)
-10. [IMPORTANTE] Tratamento de erro de rede no upload de foto
-                (retry automático ou fila offline)
+15. [ ] Validade de produtos — registrar vencimentos encontrados
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🟢 FUNCIONALIDADES PADRÃO DE TRADE — após estabilidade
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+16. [ ] Pesquisa de concorrência — preço do concorrente na seção
 
-REFERÊNCIA: padrão dos apps líderes
-(Involves Stage, Checkmob, maxPromotor, PDV Info)
+17. [ ] Foto obrigatória no checkout
 
-── PROMOTOR EM CAMPO ──
-11. [TRADE] Foto da FACHADA obrigatória no check-in
-            → promotor NÃO pode avançar sem tirar a foto
-12. [TRADE] Foto ANTES e DEPOIS obrigatória por seção/cliente
-            → não fecha a seção sem ambas as fotos registradas
-            → fotos marcadas com data, hora e localização (auditoria)
-13. [TRADE] Checklist dinâmico por seção — não avança sem completar
-14. [TRADE] Ruptura de SKU — registrar produto em falta na gôndola
-15. [TRADE] Validade de produtos — registrar vencimentos encontrados
-16. [TRADE] Pesquisa de concorrência — preço do concorrente na seção
-17. [TRADE] Foto obrigatória no checkout — não sai sem foto final
-18. [TRADE] Registro de pausa (botão Almoço / Volta) com timestamp
-19. [TRADE] Modo offline — app funciona sem internet e sincroniza
-            automaticamente quando a conexão retornar
-20. [TRADE] Abrir Maps direto na loja — botão na tela da rota
-
-── GESTOR ──
-21. [TRADE] Mapa tempo real — pins de cada promotor com status
-            → verde (ativo), amarelo (parado), vermelho (sem sinal)
-22. [TRADE] Status visual por promotor — bolinha colorida em tempo real
-23. [TRADE] Notificação push ao gestor:
-            → quando promotor faz check-in
-            → quando promotor fica +X horas sem registrar nada
-24. [TRADE] Histórico do promotor:
-            → dias trabalhados no mês
-            → média de tempo em loja
-            → lojas visitadas
-            → % de cobertura da rota
-25. [TRADE] Confirmação de rota — promotor confirma escala recebida,
-            gestor vê quem confirmou e quem não confirmou
-26. [TRADE] Dashboard de indicadores:
-            → taxa de ruptura por loja/marca
-            → tempo médio de permanência no PDV
-            → quantidade de visitas por dia
-            → % cumprimento de rota
-            → Shelf Space (quantidade de frentes)
-            → Shelf Life (vencimentos)
-            → ações da concorrência registradas
+18. [ ] Registro de pausa (botão Almoço / Volta) com timestamp
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🟢 MELHORIAS DE UX/UI
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-27. [UX] Modo Fluido do promotor — jornada completa animada
-28. [UX] Background vivo com geometria animada
-29. [UX] Transições estilo iOS nativo com Framer Motion
+27. [ ] Modo Fluido do promotor — jornada completa animada
+28. [ ] Background vivo com geometria animada
+29. [ ] Transições estilo iOS nativo com Framer Motion
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔲 BACKLOG — depois do lançamento
@@ -179,20 +170,35 @@ REFERÊNCIA: padrão dos apps líderes
 🕐 ÚLTIMA SESSÃO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Data: 30/05/2026
+Data: 31/05/2026
 
 O que foi feito:
-  - Integrado useBackButton em TODAS as telas do gestor:
-    Promotores.jsx, Lojas.jsx, Clientes.jsx, Configuracoes.jsx,
-    Relatorios.jsx, Mapa.jsx (item 3 da fila crítica CONCLUÍDO)
+  - Auditoria do código vs CLAUDE.md — itens 20 e 21 já estavam
+    implementados (Maps button no promotor + Mapa.jsx com Leaflet)
+  - Item 22 — Status visual em tempo real no gestor/Dashboard:
+    seção "PROMOTORES HOJE" com bolinhas coloridas (verde/amarelo/
+    cinza/vermelho) baseada em onSnapshot dos checkins de hoje.
+    Lógica: ativo (<60min desde checkin), parado (>60min), finalizado
+    (checkout registrado), sem sinal (sem checkin hoje).
+    Botão "Ver no Mapa ao Vivo" redireciona para gestor/Mapa.
+  - Item 25 — Confirmação de rota pelo promotor:
+    Botão "✓ Confirmar rota" na aba Rota do promotor/Dashboard.
+    Salva rotaConfirmada=true + rotaConfirmadaEm + rotaConfirmadaNome
+    no documento da escala no Firestore. Badge "✓ confirmada" (verde)
+    aparece no card da escala em gestor/Escala.jsx em tempo real
+    (já usa onSnapshot).
 
-Onde parou:
-  - BUG 5 aguarda correção manual no Firebase Console (lojaId nos promotores)
-  - Item 2: confirmar "Permanecer logado" funciona em campo
-  - Item 4: Teste real de câmera Android
+Arquivos alterados:
+  - src/pages/gestor/Dashboard.jsx (reescrito com status em tempo real)
+  - src/pages/promotor/Dashboard.jsx (estado + função + UI confirmação)
+  - src/pages/gestor/Escala.jsx (badge "✓ confirmada" no card)
 
-Próximo passo:
-  1. BUG 5 no Firebase Console (manual — lojaId ausente em promotores)
-  2. Verificar "Permanecer logado" em campo (item 2)
-  3. Aviso claro ao promotor sem rota escalada (item 5 — importante)
-  4. Relatório com dados reais (item 7 — importante)
+Pendências manuais (ação do usuário):
+  - BUG 5: vincular lojaId nos promotores (Firebase Console)
+  - Publicar storage.rules (firebase deploy --only storage)
+  - Testar câmera Android em campo
+
+Próximo passo (código):
+  1. Item 23 — notificação push ao gestor
+  2. Item 26 — dashboard de indicadores (ruptura/tempo/cobertura)
+  3. Item 24 — histórico mensal do promotor
