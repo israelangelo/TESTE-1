@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { T, S } from '../../theme/tokens';
+import { useBackButton } from '../../hooks/useBackButton';  // ← NOVO
 
 const hoje = () => new Date().toISOString().split('T')[0];
 
@@ -31,6 +32,11 @@ export default function Escala() {
   const [sheet, setSheet]     = useState(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast]     = useState('');
+
+  // ✅ Botão voltar Android — fecha sheet antes de sair da tela
+  useBackButton(() => {           // ← NOVO
+    if (sheet) { setSheet(null); return true; }
+  });
 
   // ✅ onSnapshot — 3 listeners em tempo real, cleanup automático
   useEffect(() => {
@@ -170,7 +176,6 @@ export default function Escala() {
           <div style={{ fontFamily: T.fontTitle, fontSize: 26, fontWeight: 900 }}>Escala</div>
           <div style={{ fontSize: 12, color: T.muted, marginTop: 1 }}>
             Atribuição de lojas por dia
-            {/* Indicador ao vivo */}
             <span style={{
               marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 4,
               fontSize: 10, color: '#4ade80', fontWeight: 700,

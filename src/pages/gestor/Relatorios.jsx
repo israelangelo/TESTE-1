@@ -5,6 +5,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { T, S } from '../../theme/tokens';
+import { useBackButton } from '../../hooks/useBackButton';
 
 const TIPOS_FOTO = [
   { id: 'gondola_antes',  label: 'Gôndola Antes',  icon: '📦' },
@@ -20,6 +21,7 @@ const TIPOS_FOTO = [
 ];
 
 export default function Relatorios() {
+  useBackButton();
   const navigate  = useNavigate();
   const hoje      = new Date().toISOString().split('T')[0];
 

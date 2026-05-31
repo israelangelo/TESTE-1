@@ -9,6 +9,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../../context/AuthContext';
 import { T, S } from '../../theme/tokens';
+import { useBackButton } from '../../hooks/useBackButton';
 
 function haversine(lat1, lng1, lat2, lng2) {
   const R = 6371000;
@@ -39,6 +40,7 @@ const TAREFAS_INIT = [
 ];
 
 export default function PromotorDashboard() {
+  useBackButton();
   const { currentUser, userData } = useAuth();
   const navigate = useNavigate();
   const inputFotoRef = useRef(null);

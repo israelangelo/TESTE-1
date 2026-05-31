@@ -4,6 +4,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { updatePassword, signOut, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { db, auth } from "../../firebase/config";
 import { useAuth } from "../../context/AuthContext";
+import { useBackButton } from "../../hooks/useBackButton";
 
 const CORES = {
   bg: "#032774",
@@ -20,6 +21,7 @@ const CORES = {
 const VERSAO = "1.0.0";
 
 export default function Configuracoes() {
+  useBackButton();
   const navigate = useNavigate();
   const { currentUser, userData, refreshUserData } = useAuth();
 

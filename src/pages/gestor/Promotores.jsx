@@ -5,8 +5,10 @@ import {
   deleteDoc, doc, serverTimestamp,
 } from "firebase/firestore";
 import { T, S } from "../../theme/tokens";
+import { useBackButton } from "../../hooks/useBackButton";
 
 export default function Promotores() {
+  useBackButton();
   const [promotores, setPromotores] = useState([]);
   const [lojas, setLojas] = useState([]);
   const [sheet, setSheet] = useState(false);

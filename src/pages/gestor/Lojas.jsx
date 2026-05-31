@@ -5,6 +5,7 @@ import {
   deleteDoc, doc, serverTimestamp,
 } from "firebase/firestore";
 import { T, S } from "../../theme/tokens";
+import { useBackButton } from "../../hooks/useBackButton"; // <-- ADICIONADO AQUI
 
 const FORM_VAZIO = {
   nome: "", endereco: "", cidade: "", lat: "", lng: "",
@@ -19,6 +20,8 @@ export default function Lojas() {
   const [deletando, setDeletando] = useState(null);
   const [busca, setBusca] = useState("");
   const [gpsCarregando, setGpsCarregando] = useState(false);
+
+  useBackButton(); // <-- ADICIONADO AQUI
 
   // ── Escuta lojas em tempo real ──────────────────────────────────────
   useEffect(() => {

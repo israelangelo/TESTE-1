@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { db } from '../../firebase/config';
 import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
 import { T, S } from '../../theme/tokens';
+import { useBackButton } from '../../hooks/useBackButton';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -55,6 +56,7 @@ function pinLaranja(nome) {
 }
 
 export default function Mapa() {
+  useBackButton();
   const mapRef      = useRef(null);
   const mapaInst    = useRef(null);
   const marcadores  = useRef({});
