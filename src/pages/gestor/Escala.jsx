@@ -14,37 +14,26 @@ const hoje = () => new Date().toISOString().split('T')[0];
 
 const formatData = (d) => {
   if (!d) return '';
-  const [menuAberto, setMenuAberto] = useState(false);
   const [y, m, dia] = d.split('-');
   return `${dia}/${m}/${y}`;
 };
 
 export default function Escala() {
   const navigate = useNavigate();
+  const [menuAberto, setMenuAberto] = useState(false);
 
-  const [menuAberto, setMenuAberto] = useState(false);
   const [promotores, setPromotores] = useState([]);
-  const [menuAberto, setMenuAberto] = useState(false);
   const [lojas, setLojas]           = useState([]);
-  const [menuAberto, setMenuAberto] = useState(false);
   const [escalas, setEscalas]       = useState([]);
-  const [menuAberto, setMenuAberto] = useState(false);
   const [carregando, setCarregando] = useState(true);
 
-  const [menuAberto, setMenuAberto] = useState(false);
   const [data, setData]             = useState(hoje());
-  const [menuAberto, setMenuAberto] = useState(false);
   const [promotorId, setPromotorId] = useState('');
-  const [menuAberto, setMenuAberto] = useState(false);
   const [lojasSel, setLojasSel]     = useState([]);
-  const [menuAberto, setMenuAberto] = useState(false);
   const [editId, setEditId]         = useState(null);
 
-  const [menuAberto, setMenuAberto] = useState(false);
   const [sheet, setSheet]     = useState(null);
-  const [menuAberto, setMenuAberto] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [menuAberto, setMenuAberto] = useState(false);
   const [toast, setToast]     = useState('');
 
   // ✅ Botão voltar Android — fecha sheet antes de sair da tela
@@ -339,8 +328,7 @@ export default function Escala() {
                       {(esc.lojas || []).length > 2 ? ` +${esc.lojas.length - 2}` : ''}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <div style={{
+                  <div style={{
                     background: 'rgba(224,104,32,0.15)',
                     border: `1px solid ${T.orange}`,
                     borderRadius: T.pill, padding: '4px 12px',
@@ -356,7 +344,6 @@ export default function Escala() {
                         fontSize: 11, fontWeight: 700, color: T.green,
                       }}>✓ confirmada</div>
                     )}
-                  </div>
                 </div>
               ))}
             </div>
